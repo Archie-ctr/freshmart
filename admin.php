@@ -5,7 +5,7 @@ if (session_status() === PHP_SESSION_NONE) session_start();
 
 $user = getCurrentUser();
 if (!$user || $user['role'] !== 'admin') {
-    header('Location: <?= BASE_URL ?>/login.php');
+    header('Location: ' . BASE_URL . '/login.php');
     exit;
 }
 
@@ -93,7 +93,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $id = (int)$_POST['id'];
         $pdo->prepare("DELETE FROM ecom_product_collections WHERE product_id=?")->execute([$id]);
         $pdo->prepare("DELETE FROM ecom_products WHERE id=?")->execute([$id]);
-        header('Location: <?= BASE_URL ?>/admin.php?tab=products'); exit;
+        header('Location: ' . BASE_URL . '/admin.php?tab=products'); exit;
     }
 
     if ($action === 'save_collection') {
@@ -103,7 +103,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $is_visible  = isset($_POST['is_visible']) ? 1 : 0;
         if ($title === '') {
             flash('error', 'Collection name is required.');
-            header('Location: <?= BASE_URL ?>/admin.php?tab=collections'); exit;
+            header('Location: ' . BASE_URL . '/admin.php?tab=collections'); exit;
         }
         if ($id) {
             $pdo->prepare("UPDATE ecom_collections SET title=?, description=?, is_visible=? WHERE id=?")
@@ -120,7 +120,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ->execute([$title, $handle, $description, $is_visible]);
             flash('success', 'Collection "' . $title . '" created successfully.');
         }
-        header('Location: <?= BASE_URL ?>/admin.php?tab=collections'); exit;
+        header('Location: ' . BASE_URL . '/admin.php?tab=collections'); exit;
     }
 
     if ($action === 'delete_collection') {
@@ -128,7 +128,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Cascade handled by FK, but let's be explicit
         $pdo->prepare("DELETE FROM ecom_product_collections WHERE collection_id=?")->execute([$id]);
         $pdo->prepare("DELETE FROM ecom_collections WHERE id=?")->execute([$id]);
-        header('Location: <?= BASE_URL ?>/admin.php?tab=collections'); exit;
+        header('Location: ' . BASE_URL . '/admin.php?tab=collections'); exit;
     }
 
     if ($action === 'update_order_status') {
@@ -174,7 +174,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             saveSetting($ck, isset($_POST[$ck]) ? '1' : '0');
         }
         $_SESSION['flash']['success'] = 'Settings saved successfully.';
-        header('Location: <?= BASE_URL ?>/admin.php?tab=settings&section=' . ($_POST['section'] ?? 'general')); exit;
+        header('Location: ' . BASE_URL . '/admin.php?tab=settings&section=' . ($_POST['section'] ?? 'general')); exit;
     }
 }
 
