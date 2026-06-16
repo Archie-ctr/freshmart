@@ -266,3 +266,52 @@ function sendOrderStatusEmail(string $to, string $name, int $orderId, string $st
 </div></body></html>';
     return sendMail($to, $subject, $html);
 }
+
+function sendAdminNewOrderEmail(string $adminEmail, int $orderId, array $addr, int $totalCents, array $items): bool {
+    $orderId6 = strtoupper(str_pad($orderId, 6, '0', STR_PAD_LEFT));
+    $subject  = "🛒 New Order #{$orderId6} — FreshMart";
+
+    $itemsHtml = '';
+    foreach ($items as $it) {
+        $unitPrice = $it['price'] ?? $it['unit_price'] ?? 0;
+        $itemsHtml .= '<tr>
+          <td style="padding:.35rem .75rem;border-bottom:1px solid #f3f4f6">' . htmlspecialchars($it['name'] ?? $it['product_name'] ?? '') . ' &times;' . $it['quantity'] . '</td>
+          <td style="padding:.35rem .75rem;border-bottom:1px solid #f3f4f6;text-align:right">' . formatPrice($unitPrice * $it['quantity']) . '</td>
+        </tr>';
+    }
+
+    $html = '<!DOCTYPE html><html><body style="font-family:sans-serif;background:#f9fafb;padding:2rem">
+<div style="max-width:520px;margin:0 auto;background:#fff;border-radius:.75rem;padding:2rem;box-shadow:0 1px 4px rgba(0,0,0,.08)">
+  <div style="text-align:center;margin-bottom:1.25rem">
+    <span style="font-size:2rem">🛒</span>
+    <h2 style="margin:.5rem 0 0;color:#1d4ed8">New Order Received!</h2>
+  </div>
+  <div style="background:#eff6ff;border-radius:.5rem;padding:.75rem 1rem;margin-bottom:1.25rem">
+    <strong style="color:#1d4ed8">Order #' . $orderId6 . '</strong>
+  </div>
+  <p style="color:#374151;font-size:.9rem;margin:.25rem 0"><strong>Customer:</strong> ' . htmlspecialchars($addr['name'] ?? '') . '</p>
+  <p style="color:#374151;font-size:.9rem;margin:.25rem 0"><strong>Email:</strong> ' . htmlspecialchars($addr['email'] ?? '') . '</p>
+  <p style="color:#374151;font-size:.9rem;margin:.25rem 0"><strong>Phone:</strong> ' . htmlspecialchars($addr['phone'] ?? '') . '</p>
+  <p style="color:#374151;font-size:.9rem;margin:.25rem 0 1rem"><strong>Address:</strong> ' . htmlspecialchars(($addr['address'] ?? '') . ', ' . ($addr['city'] ?? '')) . '</p>
+  <table style="width:100%;border-collapse:collapse;font-size:.875rem">
+    <thead><tr style="background:#f9fafb">
+      <th style="padding:.35rem .75rem;text-align:left;color:#374151">Item</th>
+      <th style="padding:.35rem .75rem;text-align:right;color:#374151">Amount</th>
+    </tr></thead>
+    <tbody>' . $itemsHtml . '</tbody>
+    <tfoot><tr>
+      <td style="padding:.75rem;font-weight:700;color:#111827">Total</td>
+      <td style="padding:.75rem;font-weight:700;color:#1d4ed8;text-align:right">' . formatPrice($totalCents) . '</td>
+    </tr></tfoot>
+  </table>
+  <div style="text-align:center;margin-top:1.5rem">
+    <a href="https://freshmartstore.gt.tc/admin.php?tab=orders"
+       style="background:#1d4ed8;color:#fff;padding:.65rem 1.5rem;border-radius:.5rem;text-decoration:none;font-weight:600;display:inline-block">
+      View in Admin &rarr;
+    </a>
+  </div>
+  <hr style="border:none;border-top:1px solid #e5e7eb;margin:1.5rem 0">
+  <p style="color:#9ca3af;font-size:.75rem;text-align:center">FreshMart Admin Notification</p>
+</div></body></html>';
+    return sendMail($adminEmail, $subject, $html);
+}

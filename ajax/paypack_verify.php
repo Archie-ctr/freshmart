@@ -51,7 +51,7 @@ if ($status === 'successful') {
             unset($_SESSION['pending_order']);
             clearCart();
 
-            // Send order confirmation email
+            // Send order confirmation email to customer
             if (!empty($lastOrder['email'])) {
                 sendOrderConfirmationEmail(
                     $lastOrder['email'],
@@ -59,6 +59,16 @@ if ($status === 'successful') {
                     $lastOrder
                 );
             }
+
+            // Notify admin of new order
+            $adminEmail = getSetting('store_email', 'freshmartstore4@gmail.com');
+            sendAdminNewOrderEmail(
+                $adminEmail,
+                $pending['id'],
+                $pending['addr'],
+                $pending['total'],
+                $pending['items']
+            );
 
         } catch (Exception $e) {
             // Log but still report success to frontend
