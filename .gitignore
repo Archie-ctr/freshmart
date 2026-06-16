@@ -1,0 +1,36 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Uploaded files (don't commit user uploads)
+uploads/products/*.jpg
+uploads/products/*.jpeg
+uploads/products/*.png
+uploads/products/*.gif
+uploads/products/*.webp
+uploads/products/*.avif
+
+# Environment secrets
+.env
+.env.local
+.env.production
+
+# Production config with real credentials — never commit
+config.php
+
+# Docker volumes / overrides
+docker-compose.override.yml
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log

@@ -1,0 +1,10 @@
+node_modules/
+.git/
+.gitignore
+*.md
+uploads/products/*.jpg
+uploads/products/*.png
+uploads/products/*.webp
+docker-compose.override.yml
+.env
+.env.*

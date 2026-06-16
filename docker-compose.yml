@@ -1,0 +1,63 @@
+services:
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: freshmart_app
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    environment:
+      DB_HOST: db
+      DB_USER: freshmart
+      DB_PASS: freshmart_pass
+      DB_NAME: freshmart
+    depends_on:
+      - db
+    volumes:
+      - uploads_data:/var/www/html/uploads/products
+    networks:
+      - freshmart_net
+
+  db:
+    image: mysql:8.0
+    container_name: freshmart_db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root_secret
+      MYSQL_DATABASE: freshmart
+      MYSQL_USER: freshmart
+      MYSQL_PASSWORD: freshmart_pass
+    ports:
+      - "3307:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./install.sql:/docker-entrypoint-initdb.d/install.sql:ro
+    networks:
+      - freshmart_net
+
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: freshmart_pma
+    restart: unless-stopped
+    ports:
+      - "8081:80"
+    environment:
+      PMA_HOST: db
+      PMA_USER: freshmart
+      PMA_PASSWORD: freshmart_pass
+    depends_on:
+      - db
+    networks:
+      - freshmart_net
+    profiles:
+      - dev
+
+volumes:
+  db_data:
+  uploads_data:
+
+networks:
+  freshmart_net:
+    driver: bridge
