@@ -3,7 +3,7 @@ require_once __DIR__ . '/layout.php';
 
 $order = $_SESSION['last_order'] ?? null;
 if (!$order) {
-    header('Location: /store-php/shop.php');
+    header('Location: ' . BASE_URL . '/shop.php');
     exit;
 }
 unset($_SESSION['last_order']);
@@ -36,15 +36,15 @@ startPage('Order Confirmed');
     <div style="margin-top:1rem;font-size:.875rem;color:var(--gray-500)">
       <p style="color:var(--gray-700);font-weight:500">Delivering to:</p>
       <p><?= h($a['name']) ?></p>
-      <p><?= h($a['address']) ?>, <?= h($a['city']) ?>, <?= h($a['state']) ?> <?= h($a['zip']) ?></p>
+      <p><?= h($a['address']) ?>, <?= h($a['city']) ?></p>
       <p style="margin-top:.5rem;color:var(--green)">Estimated delivery: 1-2 business days</p>
     </div>
     <?php endif; ?>
   </div>
 
   <div class="confirm-btns">
-    <a href="/store-php/shop.php" class="btn btn-green">Continue Shopping</a>
-    <a href="/store-php/orders.php" class="btn btn-outline">My Orders</a>
+    <a href="<?= BASE_URL ?>/shop.php" class="btn btn-green">Continue Shopping</a>
+    <a href="<?= BASE_URL ?>/orders.php" class="btn btn-outline">My Orders</a>
   </div>
 </div>
 

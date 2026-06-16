@@ -4,7 +4,7 @@ require_once __DIR__ . '/paypack.php';
 
 $cart = getCart();
 if (empty($cart)) {
-    header('Location: /store-php/cart.php');
+    header('Location: ' . BASE_URL . '/cart.php');
     exit;
 }
 
@@ -147,6 +147,7 @@ startPage('Checkout');
 </div>
 
 <script>
+const BASE_URL_JS = '<?= BASE_URL ?>';
 // Collected delivery data
 let deliveryData = {};
 let currentRef   = null;
@@ -207,7 +208,7 @@ function initiatePayment() {
     phone: phoneClean,
   });
 
-  fetch('/store-php/ajax/paypack_initiate.php', {
+  fetch(BASE_URL_JS + '/ajax/paypack_initiate.php', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: body.toString(),
@@ -260,13 +261,13 @@ function checkPayment() {
   if (!currentRef) return;
   pollCount++;
 
-  fetch('/store-php/ajax/paypack_verify.php?ref=' + encodeURIComponent(currentRef))
+  fetch(BASE_URL_JS + '/ajax/paypack_verify.php?ref=' + encodeURIComponent(currentRef))
   .then(r => r.json())
   .then(data => {
     if (data.status === 'successful') {
       document.getElementById('pay-waiting').style.display = 'none';
       document.getElementById('pay-success').style.display = 'block';
-      setTimeout(() => { window.location = '/store-php/order-confirmation.php'; }, 1800);
+      setTimeout(() => { window.location = BASE_URL_JS + '/order-confirmation.php'; }, 1800);
       return;
     }
 

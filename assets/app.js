@@ -33,7 +33,7 @@ function showToast(msg, type = 'green') {
 
 // ── Add to cart (AJAX) ────────────────────────────────────────
 function addToCart(productId, qty = 1) {
-  fetch('/store-php/ajax/cart_add.php', {
+  fetch(BASE_URL + '/ajax/cart_add.php', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: `product_id=${productId}&qty=${qty}`
@@ -63,7 +63,7 @@ function addToCart(productId, qty = 1) {
 
 // ── Cart quantity update (AJAX) ───────────────────────────────
 function updateQty(productId, qty) {
-  fetch('/store-php/ajax/cart_update.php', {
+  fetch(BASE_URL + '/ajax/cart_update.php', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: `product_id=${productId}&qty=${qty}`
@@ -76,7 +76,7 @@ function updateQty(productId, qty) {
 
 // ── Cart remove ───────────────────────────────────────────────
 function removeFromCart(productId) {
-  fetch('/store-php/ajax/cart_remove.php', {
+  fetch(BASE_URL + '/ajax/cart_remove.php', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: `product_id=${productId}`
@@ -146,7 +146,7 @@ function subscribeNewsletter(e) {
   const email = document.getElementById('nl-email').value;
   const phone = document.getElementById('nl-phone').value;
   const sms   = document.getElementById('nl-sms').checked;
-  fetch('/store-php/ajax/newsletter.php', {
+  fetch(BASE_URL + '/ajax/newsletter.php', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: `email=${encodeURIComponent(email)}&phone=${encodeURIComponent(phone)}&sms=${sms ? 1 : 0}`

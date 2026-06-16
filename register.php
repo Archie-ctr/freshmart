@@ -2,7 +2,7 @@
 require_once __DIR__ . '/layout.php';
 
 if (getCurrentUser()) {
-    header('Location: /store-php/');
+    header('Location: ' . BASE_URL . '/');
     exit;
 }
 
@@ -28,7 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 "INSERT INTO profiles (email, full_name, password, role) VALUES (?, ?, ?, ?)"
             )->execute([$email, $name, $hash, $role]);
             $_SESSION['user_id'] = (int)$pdo->lastInsertId();
-            header('Location: /store-php/');
+            header('Location: ' . BASE_URL . '/');
             exit;
         }
     }
@@ -49,7 +49,7 @@ startPage('Create Account');
       <div class="alert alert-red"><?= h($error) ?></div>
     <?php endif; ?>
 
-    <form method="post" action="/store-php/register.php" class="form-group">
+    <form method="post" action="<?= BASE_URL ?>/register.php" class="form-group">
       <input type="text"     name="name"     required placeholder="Full Name"
              value="<?= h($_POST['name'] ?? '') ?>" autocomplete="name" />
       <input type="email"    name="email"    required placeholder="Email"
@@ -59,7 +59,7 @@ startPage('Create Account');
       <button type="submit" class="btn btn-green">Create Account</button>
     </form>
 
-    <p class="info-msg">Have an account? <a href="/store-php/login.php" class="link-green">Sign in</a></p>
+    <p class="info-msg">Have an account? <a href="<?= BASE_URL ?>/login.php" class="link-green">Sign in</a></p>
   </div>
 </div>
 

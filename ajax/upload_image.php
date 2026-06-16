@@ -1,7 +1,7 @@
 <?php
 /**
  * AJAX image uploader for product images.
- * Returns JSON: { ok: true, url: "/store-php/uploads/products/xxx.webp" }
+ * Returns JSON: { ok: true, url: "/uploads/products/xxx.webp" }
  */
 require_once dirname(__DIR__) . '/functions.php';
 if (session_status() === PHP_SESSION_NONE) session_start();
@@ -76,5 +76,5 @@ if (!move_uploaded_file($file['tmp_name'], $destPath)) {
 }
 
 // Return the public URL
-$url = '/store-php/uploads/products/' . $filename;
+$url = BASE_URL . '/uploads/products/' . $filename;
 echo json_encode(['ok' => true, 'url' => $url, 'filename' => $filename]);

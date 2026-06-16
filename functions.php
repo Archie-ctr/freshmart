@@ -23,14 +23,13 @@ function isAdmin(): bool {
 
 function requireAdmin(): void {
     if (!isAdmin()) {
-        header('Location: /store-php/login.php');
+        $base = defined('BASE_URL') ? BASE_URL : '';
+        header('Location: ' . $base . '/login.php');
         exit;
     }
 }
 
 // ── Price helpers ─────────────────────────────────────────────
-// Exchange rate: 1 USD = 1,400 RWF (update as needed)
-define('USD_TO_RWF', 1400);
 
 /**
  * Returns an HTML snippet showing the price in both USD and RWF.
@@ -151,6 +150,11 @@ function saveSetting(string $key, string $value): void {
         "INSERT INTO shop_settings (setting_key, setting_val) VALUES (?,?)
          ON DUPLICATE KEY UPDATE setting_val=VALUES(setting_val)"
     )->execute([$key, $value]);
+}
+
+// USD_TO_RWF defined here (after getSetting is available)
+if (!defined('USD_TO_RWF')) {
+    define('USD_TO_RWF', (int)(getSetting('usd_to_rwf_rate', '1400') ?: 1400));
 }
 function calculateTax(string $state, int $subtotalCents): int {
     $rates = [

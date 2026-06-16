@@ -2,7 +2,7 @@
 require_once __DIR__ . '/layout.php';
 
 $handle = trim($_GET['handle'] ?? '');
-if (!$handle) { header('Location: /store-php/shop.php'); exit; }
+if (!$handle) { header('Location: ' . BASE_URL . '/shop.php'); exit; }
 
 $pdo  = getDB();
 $stmt = $pdo->prepare("SELECT * FROM ecom_collections WHERE handle = ?");
@@ -11,12 +11,11 @@ $col  = $stmt->fetch();
 
 if (!$col) {
     startPage('Not Found');
-    echo '<div class="section"><div class="empty-state"><div class="empty-icon">😕</div><h2>Collection not found</h2><a href="/store-php/shop.php" class="btn btn-green" style="margin-top:1rem">Back to shop</a></div></div>';
+    echo '<div class="section"><div class="empty-state"><div class="empty-icon">😕</div><h2>Collection not found</h2><a href="' . BASE_URL . '/shop.php" class="btn btn-green" style="margin-top:1rem">Back to shop</a></div></div>';
     endPage();
     exit;
 }
 
-// Products via junction table — with avg rating
 $stmt = $pdo->prepare(
     "SELECT p.*, ROUND(AVG(r.rating),1) AS avg_rating, COUNT(r.id) AS review_count
      FROM ecom_products p
@@ -53,7 +52,7 @@ startPage($col['title']);
     <div class="empty-state">
       <div class="empty-icon"><?= $icon ?></div>
       <h2>No products here yet</h2>
-      <a href="/store-php/shop.php" class="btn btn-green" style="margin-top:1rem">Browse all products</a>
+      <a href="<?= BASE_URL ?>/shop.php" class="btn btn-green" style="margin-top:1rem">Browse all products</a>
     </div>
   <?php else: ?>
   <div class="product-grid">
@@ -62,7 +61,7 @@ startPage($col['title']);
       $img    = $images[0] ?? '';
       $tags   = json_decode($p['tags'] ?? '[]', true);
     ?>
-    <a href="/store-php/product.php?handle=<?= h($p['handle']) ?>" class="product-card">
+    <a href="<?= BASE_URL ?>/product.php?handle=<?= h($p['handle']) ?>" class="product-card">
       <div class="product-card-img">
         <img src="<?= h($img) ?>" alt="<?= h($p['name']) ?>" loading="lazy" />
         <?php if (in_array('featured', $tags)): ?>

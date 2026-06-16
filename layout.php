@@ -2,6 +2,8 @@
 require_once __DIR__ . '/functions.php';
 if (session_status() === PHP_SESSION_NONE) session_start();
 
+// BASE_URL is defined in db.php (loaded via functions.php)
+
 // Call startPage() at the top of every page, endPage() at the bottom
 function startPage(string $title = 'FreshMart'): void {
     $user  = getCurrentUser();
@@ -16,7 +18,7 @@ function startPage(string $title = 'FreshMart'): void {
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title><?= h($title) ?> – <?= h(getSetting('store_name','FreshMart')) ?></title>
   <meta name="description" content="<?= h(getSetting('meta_description','')) ?>" />
-  <link rel="stylesheet" href="/store-php/assets/style.css" />
+  <link rel="stylesheet" href="<?= BASE_URL ?>/assets/style.css" />
   <?php if(getSetting('google_analytics')): ?>
   <script async src="https://www.googletagmanager.com/gtag/js?id=<?= h(getSetting('google_analytics')) ?>"></script>
   <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','<?= h(getSetting('google_analytics')) ?>');</script>
@@ -28,12 +30,12 @@ function startPage(string $title = 'FreshMart'): void {
   <div class="announcement-bar"><?= h(getSetting('announcement_text', 'Free shipping on all orders — Fresh groceries delivered to your door')) ?></div>
 <?php endif ?>
   <div class="header-inner">
-    <a href="/store-php/" class="logo">
+    <a href="<?= BASE_URL ?>/" class="logo">
       <span class="logo-icon">🌿</span>
       <span class="logo-text">FreshMart</span>
     </a>
 
-    <form action="/store-php/shop.php" method="get" class="search-form desktop-only">
+    <form action="<?= BASE_URL ?>/shop.php" method="get" class="search-form desktop-only">
       <input type="text" name="q" placeholder="Search products…" value="<?= h($_GET['q'] ?? '') ?>" />
       <button type="submit">🔍</button>
     </form>
@@ -45,19 +47,19 @@ function startPage(string $title = 'FreshMart'): void {
         </button>
         <div class="account-dropdown" style="display:none">
           <?php if (!$user): ?>
-            <a href="/store-php/login.php">Sign In</a>
-            <a href="/store-php/register.php">Create Account</a>
+            <a href="<?= BASE_URL ?>/login.php">Sign In</a>
+            <a href="<?= BASE_URL ?>/register.php">Create Account</a>
           <?php else: ?>
             <div class="dropdown-email"><?= h($user['email']) ?></div>
-            <a href="/store-php/orders.php">My Orders</a>
+            <a href="<?= BASE_URL ?>/orders.php">My Orders</a>
             <?php if ($user['role'] === 'admin'): ?>
-              <a href="/store-php/admin.php">⚙ Admin</a>
+              <a href="<?= BASE_URL ?>/admin.php">⚙ Admin</a>
             <?php endif; ?>
-            <a href="/store-php/logout.php" class="danger">Sign Out</a>
+            <a href="<?= BASE_URL ?>/logout.php" class="danger">Sign Out</a>
           <?php endif; ?>
         </div>
       </div>
-      <a href="/store-php/cart.php" class="cart-btn">
+      <a href="<?= BASE_URL ?>/cart.php" class="cart-btn">
         🛒<?php if ($count > 0): ?><span class="cart-badge"><?= $count ?></span><?php endif; ?>
       </a>
       <button class="mobile-menu-btn" onclick="toggleMobileMenu()" aria-label="Menu">☰</button>
@@ -65,20 +67,20 @@ function startPage(string $title = 'FreshMart'): void {
   </div>
 
   <nav class="main-nav desktop-only">
-    <a href="/store-php/shop.php">All Products</a>
+    <a href="<?= BASE_URL ?>/shop.php">All Products</a>
     <?php foreach ($cols as $c): ?>
-      <a href="/store-php/collection.php?handle=<?= h($c['handle']) ?>"><?= h($c['title']) ?></a>
+      <a href="<?= BASE_URL ?>/collection.php?handle=<?= h($c['handle']) ?>"><?= h($c['title']) ?></a>
     <?php endforeach; ?>
   </nav>
 
   <div class="mobile-nav" id="mobile-nav" style="display:none">
-    <form action="/store-php/shop.php" method="get" class="search-form">
+    <form action="<?= BASE_URL ?>/shop.php" method="get" class="search-form">
       <input type="text" name="q" placeholder="Search…" value="<?= h($_GET['q'] ?? '') ?>" />
       <button type="submit">🔍</button>
     </form>
-    <a href="/store-php/shop.php">All Products</a>
+    <a href="<?= BASE_URL ?>/shop.php">All Products</a>
     <?php foreach ($cols as $c): ?>
-      <a href="/store-php/collection.php?handle=<?= h($c['handle']) ?>"><?= h($c['title']) ?></a>
+      <a href="<?= BASE_URL ?>/collection.php?handle=<?= h($c['handle']) ?>"><?= h($c['title']) ?></a>
     <?php endforeach; ?>
   </div>
 </header>
@@ -103,7 +105,7 @@ function endPage(): void {
 
       <!-- Brand column -->
       <div class="footer-col footer-brand">
-        <a href="/store-php/" class="footer-logo">
+        <a href="<?= BASE_URL ?>/" class="footer-logo">
           <span class="footer-logo-icon">🌿</span>
           <span class="footer-logo-text">FreshMart</span>
         </a>
@@ -121,13 +123,13 @@ function endPage(): void {
       <div class="footer-col">
         <h4 class="footer-heading">Shop</h4>
         <ul class="footer-links">
-          <li><a href="/store-php/shop.php">All Products</a></li>
-          <li><a href="/store-php/collection.php?handle=fruits">🍎 Fruits</a></li>
-          <li><a href="/store-php/collection.php?handle=vegetables">🥦 Vegetables</a></li>
-          <li><a href="/store-php/collection.php?handle=dairy">🥛 Dairy</a></li>
-          <li><a href="/store-php/collection.php?handle=beverages">🧃 Beverages</a></li>
-          <li><a href="/store-php/collection.php?handle=bakery">🍞 Bakery</a></li>
-          <li><a href="/store-php/collection.php?handle=snacks">🍿 Snacks</a></li>
+          <li><a href="<?= BASE_URL ?>/shop.php">All Products</a></li>
+          <li><a href="<?= BASE_URL ?>/collection.php?handle=fruits">🍎 Fruits</a></li>
+          <li><a href="<?= BASE_URL ?>/collection.php?handle=vegetables">🥦 Vegetables</a></li>
+          <li><a href="<?= BASE_URL ?>/collection.php?handle=dairy">🥛 Dairy</a></li>
+          <li><a href="<?= BASE_URL ?>/collection.php?handle=beverages">🧃 Beverages</a></li>
+          <li><a href="<?= BASE_URL ?>/collection.php?handle=bakery">🍞 Bakery</a></li>
+          <li><a href="<?= BASE_URL ?>/collection.php?handle=snacks">🍿 Snacks</a></li>
         </ul>
       </div>
 
@@ -135,11 +137,11 @@ function endPage(): void {
       <div class="footer-col">
         <h4 class="footer-heading">Account</h4>
         <ul class="footer-links">
-          <li><a href="/store-php/login.php">Sign In</a></li>
-          <li><a href="/store-php/register.php">Create Account</a></li>
-          <li><a href="/store-php/orders.php">My Orders</a></li>
-          <li><a href="/store-php/cart.php">View Cart</a></li>
-          <li><a href="/store-php/admin.php">Admin Dashboard</a></li>
+          <li><a href="<?= BASE_URL ?>/login.php">Sign In</a></li>
+          <li><a href="<?= BASE_URL ?>/register.php">Create Account</a></li>
+          <li><a href="<?= BASE_URL ?>/orders.php">My Orders</a></li>
+          <li><a href="<?= BASE_URL ?>/cart.php">View Cart</a></li>
+          <li><a href="<?= BASE_URL ?>/admin.php">Admin Dashboard</a></li>
         </ul>
 
         <h4 class="footer-heading" style="margin-top:1.75rem">Support</h4>
@@ -195,7 +197,8 @@ function endPage(): void {
 
 </footer>
 
-<script src="/store-php/assets/app.js"></script>
+<script>const BASE_URL = '<?= BASE_URL ?>';</script>
+<script src="<?= BASE_URL ?>/assets/app.js"></script>
 </body>
 </html>
 <?php

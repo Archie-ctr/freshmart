@@ -2,7 +2,7 @@
 require_once __DIR__ . '/layout.php';
 
 if (getCurrentUser()) {
-    header('Location: /store-php/');
+    header('Location: ' . BASE_URL . '/');
     exit;
 }
 
@@ -18,7 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($row && password_verify($password, $row['password'])) {
         $_SESSION['user_id'] = $row['id'];
-        header('Location: /store-php/');
+        header('Location: ' . BASE_URL . '/');
         exit;
     } else {
         $error = 'Invalid email or password.';
@@ -43,14 +43,14 @@ startPage('Sign In');
       <div class="alert alert-green"><?= h($success) ?></div>
     <?php endif; ?>
 
-    <form method="post" action="/store-php/login.php" class="form-group">
+    <form method="post" action="<?= BASE_URL ?>/login.php" class="form-group">
       <input type="email"    name="email"    required placeholder="Email"
              value="<?= h($_POST['email'] ?? '') ?>" autocomplete="email" />
       <input type="password" name="password" required placeholder="Password" autocomplete="current-password" />
       <button type="submit" class="btn btn-green">Sign In</button>
     </form>
 
-    <p class="info-msg">No account? <a href="/store-php/register.php" class="link-green">Create one</a></p>
+    <p class="info-msg">No account? <a href="<?= BASE_URL ?>/register.php" class="link-green">Create one</a></p>
     <p class="info-msg">Admin demo: admin@freshmart.com / admin123</p>
   </div>
 </div>

@@ -14,6 +14,12 @@ define('DB_USER', defined('CFG_DB_USER') ? CFG_DB_USER : (getenv('DB_USER') ?: '
 define('DB_PASS', defined('CFG_DB_PASS') ? CFG_DB_PASS : (getenv('DB_PASS') ?: ''));
 define('DB_NAME', defined('CFG_DB_NAME') ? CFG_DB_NAME : (getenv('DB_NAME') ?: 'freshmart'));
 
+// Base URL: /store-php on XAMPP localhost, empty string on Docker/live server
+if (!defined('BASE_URL')) {
+    $script = $_SERVER['SCRIPT_NAME'] ?? '';
+    define('BASE_URL', str_contains($script, '/store-php/') ? '/store-php' : '');
+}
+
 function getDB(): PDO {
     static $pdo = null;
 

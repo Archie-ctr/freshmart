@@ -4,7 +4,7 @@ if (session_status() === PHP_SESSION_NONE) session_start();
 
 $user = getCurrentUser();
 if (!$user || $user['role'] !== 'admin') {
-    header('Location: /store-php/login.php');
+    header('Location: <?= BASE_URL ?>/login.php');
     exit;
 }
 
@@ -42,14 +42,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $pdo->prepare("DELETE FROM ecom_product_collections WHERE product_id=?")->execute([$productId]);
             $pdo->prepare("INSERT INTO ecom_product_collections (product_id,collection_id,position) VALUES (?,?,0)")->execute([$productId,$col['id']]);
         }
-        header('Location: /store-php/admin.php?tab=products'); exit;
+        header('Location: <?= BASE_URL ?>/admin.php?tab=products'); exit;
     }
 
     if ($action === 'delete_product') {
         $id = (int)$_POST['id'];
         $pdo->prepare("DELETE FROM ecom_product_collections WHERE product_id=?")->execute([$id]);
         $pdo->prepare("DELETE FROM ecom_products WHERE id=?")->execute([$id]);
-        header('Location: /store-php/admin.php?tab=products'); exit;
+        header('Location: <?= BASE_URL ?>/admin.php?tab=products'); exit;
     }
 
     if ($action === 'save_collection') {
@@ -59,7 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $is_visible  = isset($_POST['is_visible']) ? 1 : 0;
         if ($title === '') {
             flash('error', 'Collection name is required.');
-            header('Location: /store-php/admin.php?tab=collections'); exit;
+            header('Location: <?= BASE_URL ?>/admin.php?tab=collections'); exit;
         }
         if ($id) {
             $pdo->prepare("UPDATE ecom_collections SET title=?, description=?, is_visible=? WHERE id=?")
@@ -76,7 +76,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ->execute([$title, $handle, $description, $is_visible]);
             flash('success', 'Collection "' . $title . '" created successfully.');
         }
-        header('Location: /store-php/admin.php?tab=collections'); exit;
+        header('Location: <?= BASE_URL ?>/admin.php?tab=collections'); exit;
     }
 
     if ($action === 'delete_collection') {
@@ -84,7 +84,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Cascade handled by FK, but let's be explicit
         $pdo->prepare("DELETE FROM ecom_product_collections WHERE collection_id=?")->execute([$id]);
         $pdo->prepare("DELETE FROM ecom_collections WHERE id=?")->execute([$id]);
-        header('Location: /store-php/admin.php?tab=collections'); exit;
+        header('Location: <?= BASE_URL ?>/admin.php?tab=collections'); exit;
     }
 
     if ($action === 'update_order_status') {
@@ -93,7 +93,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $allowed = ['pending','paid','processing','shipped','delivered','cancelled'];
         if (in_array($status, $allowed))
             $pdo->prepare("UPDATE ecom_orders SET status=? WHERE id=?")->execute([$status,$orderId]);
-        header('Location: /store-php/admin.php?tab=orders'); exit;
+        header('Location: <?= BASE_URL ?>/admin.php?tab=orders'); exit;
     }
 
     if ($action === 'save_settings') {
@@ -118,7 +118,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             saveSetting($ck, isset($_POST[$ck]) ? '1' : '0');
         }
         $_SESSION['flash']['success'] = 'Settings saved successfully.';
-        header('Location: /store-php/admin.php?tab=settings&section=' . ($_POST['section'] ?? 'general')); exit;
+        header('Location: <?= BASE_URL ?>/admin.php?tab=settings&section=' . ($_POST['section'] ?? 'general')); exit;
     }
 }
 
@@ -173,15 +173,15 @@ function statusBadge(string $status, array $map): string {
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Admin – FreshMart</title>
-  <link rel="stylesheet" href="/store-php/assets/style.css" />
-  <link rel="stylesheet" href="/store-php/assets/admin.css" />
+  <link rel="stylesheet" href="<?= BASE_URL ?>/assets/style.css" />
+  <link rel="stylesheet" href="<?= BASE_URL ?>/assets/admin.css" />
 </head>
 <body class="adm-body">
 
 <!-- ── Sidebar ── -->
 <aside class="adm-sidebar" id="adm-sidebar">
   <div class="adm-sidebar-logo">
-    <a href="/store-php/" class="adm-logo-link">
+    <a href="<?= BASE_URL ?>/" class="adm-logo-link">
       <span class="adm-logo-icon">🌿</span>
       <span class="adm-logo-text">FreshMart</span>
     </a>
@@ -190,31 +190,31 @@ function statusBadge(string $status, array $map): string {
 
   <div class="adm-sidebar-section-label">Main</div>
   <nav class="adm-nav">
-    <a href="/store-php/admin.php?tab=dashboard" class="adm-nav-item <?= $tab==='dashboard'?'active':'' ?>">
+    <a href="<?= BASE_URL ?>/admin.php?tab=dashboard" class="adm-nav-item <?= $tab==='dashboard'?'active':'' ?>">
       <span class="adm-nav-icon">🏠</span> Dashboard
     </a>
-    <a href="/store-php/admin.php?tab=orders" class="adm-nav-item <?= $tab==='orders'?'active':'' ?>">
+    <a href="<?= BASE_URL ?>/admin.php?tab=orders" class="adm-nav-item <?= $tab==='orders'?'active':'' ?>">
       <span class="adm-nav-icon">🛒</span> Orders
       <?php $pendingCount = count(array_filter($orders, fn($o)=>$o['status']==='pending')); ?>
       <?php if($pendingCount): ?><span class="adm-nav-badge"><?= $pendingCount ?></span><?php endif ?>
     </a>
-    <a href="/store-php/admin.php?tab=products" class="adm-nav-item <?= $tab==='products'?'active':'' ?>">
+    <a href="<?= BASE_URL ?>/admin.php?tab=products" class="adm-nav-item <?= $tab==='products'?'active':'' ?>">
       <span class="adm-nav-icon">📦</span> Products
     </a>
-    <a href="/store-php/admin.php?tab=customers" class="adm-nav-item <?= $tab==='customers'?'active':'' ?>">
+    <a href="<?= BASE_URL ?>/admin.php?tab=customers" class="adm-nav-item <?= $tab==='customers'?'active':'' ?>">
       <span class="adm-nav-icon">👥</span> Customers
     </a>
   </nav>
 
   <div class="adm-sidebar-section-label">Store</div>
   <nav class="adm-nav">
-    <a href="/store-php/" class="adm-nav-item" target="_blank">
+    <a href="<?= BASE_URL ?>/" class="adm-nav-item" target="_blank">
       <span class="adm-nav-icon">🏪</span> View Store
     </a>
-    <a href="/store-php/admin.php?tab=collections" class="adm-nav-item <?= $tab==='collections'?'active':'' ?>">
+    <a href="<?= BASE_URL ?>/admin.php?tab=collections" class="adm-nav-item <?= $tab==='collections'?'active':'' ?>">
       <span class="adm-nav-icon">🗂</span> Collections
     </a>
-    <a href="/store-php/admin.php?tab=settings" class="adm-nav-item <?= $tab==='settings'?'active':'' ?>">
+    <a href="<?= BASE_URL ?>/admin.php?tab=settings" class="adm-nav-item <?= $tab==='settings'?'active':'' ?>">
       <span class="adm-nav-icon">⚙️</span> Settings
     </a>
   </nav>
@@ -226,7 +226,7 @@ function statusBadge(string $status, array $map): string {
         <div class="adm-user-name"><?= h($user['full_name'] ?: 'Admin') ?></div>
         <div class="adm-user-role">Administrator</div>
       </div>
-      <a href="/store-php/logout.php" class="adm-logout-btn" title="Sign out">⏻</a>
+      <a href="<?= BASE_URL ?>/logout.php" class="adm-logout-btn" title="Sign out">⏻</a>
     </div>
   </div>
 </aside>
@@ -249,7 +249,7 @@ function statusBadge(string $status, array $map): string {
     </div>
     <div class="adm-topbar-right">
       <span class="adm-topbar-date"><?= date('D, M j Y') ?></span>
-      <a href="/store-php/" class="adm-topbar-store-btn" target="_blank">🏪 View Store</a>
+      <a href="<?= BASE_URL ?>/" class="adm-topbar-store-btn" target="_blank">🏪 View Store</a>
     </div>
   </header>
 
@@ -306,7 +306,7 @@ function statusBadge(string $status, array $map): string {
     <div class="adm-panel">
       <div class="adm-panel-head">
         <h2>Recent Orders</h2>
-        <a href="/store-php/admin.php?tab=orders" class="adm-panel-link">View all →</a>
+        <a href="<?= BASE_URL ?>/admin.php?tab=orders" class="adm-panel-link">View all →</a>
       </div>
       <?php if(empty($recentOrders)): ?>
         <div class="adm-empty"><span>🛒</span><p>No orders yet</p></div>
@@ -337,7 +337,7 @@ function statusBadge(string $status, array $map): string {
       <div class="adm-panel">
         <div class="adm-panel-head">
           <h2>⚠ Low Stock</h2>
-          <a href="/store-php/admin.php?tab=products" class="adm-panel-link">Manage →</a>
+          <a href="<?= BASE_URL ?>/admin.php?tab=products" class="adm-panel-link">Manage →</a>
         </div>
         <?php if(empty($lowStock)): ?>
           <div class="adm-empty"><span>✅</span><p>All products stocked</p></div>
@@ -367,13 +367,13 @@ function statusBadge(string $status, array $map): string {
           <button onclick="openNewProduct()" class="adm-quick-btn" style="--qc:#f0fdf4;--qt:#15803d">
             <span>➕</span> Add Product
           </button>
-          <a href="/store-php/admin.php?tab=orders" class="adm-quick-btn" style="--qc:#eff6ff;--qt:#1d4ed8">
+          <a href="<?= BASE_URL ?>/admin.php?tab=orders" class="adm-quick-btn" style="--qc:#eff6ff;--qt:#1d4ed8">
             <span>🛒</span> View Orders
           </a>
-          <a href="/store-php/admin.php?tab=customers" class="adm-quick-btn" style="--qc:#fdf4ff;--qt:#7e22ce">
+          <a href="<?= BASE_URL ?>/admin.php?tab=customers" class="adm-quick-btn" style="--qc:#fdf4ff;--qt:#7e22ce">
             <span>👥</span> Customers
           </a>
-          <a href="/store-php/" target="_blank" class="adm-quick-btn" style="--qc:#fff7ed;--qt:#c2410c">
+          <a href="<?= BASE_URL ?>/" target="_blank" class="adm-quick-btn" style="--qc:#fff7ed;--qt:#c2410c">
             <span>🏪</span> View Store
           </a>
         </div>
@@ -429,7 +429,7 @@ function statusBadge(string $status, array $map): string {
           <div class="adm-row-actions">
             <button class="adm-icon-btn edit" title="Edit"
               onclick='editProduct(<?= json_encode(["id"=>$p['id'],"name"=>$p['name'],"price_dollars"=>number_format($p['price']/100,2,'.',''),"product_type"=>$p['product_type'],"image"=>$img,"inventory_qty"=>$p['inventory_qty'],"description"=>$p['description']??'',"featured"=>in_array('featured',$tags)?1:0]) ?>)'>✏️</button>
-            <form method="post" action="/store-php/admin.php?tab=products" style="display:inline" onsubmit="return confirm('Delete this product?')">
+            <form method="post" action="<?= BASE_URL ?>/admin.php?tab=products" style="display:inline" onsubmit="return confirm('Delete this product?')">
               <input type="hidden" name="action" value="delete_product">
               <input type="hidden" name="id"     value="<?= $p['id'] ?>">
               <button type="submit" class="adm-icon-btn del" title="Delete">🗑️</button>
@@ -485,7 +485,7 @@ function statusBadge(string $status, array $map): string {
         <?php endforeach?>
       </div>
       <div class="adm-order-actions">
-        <form method="post" action="/store-php/admin.php?tab=orders" style="display:flex;gap:.5rem;align-items:center">
+        <form method="post" action="<?= BASE_URL ?>/admin.php?tab=orders" style="display:flex;gap:.5rem;align-items:center">
           <input type="hidden" name="action"   value="update_order_status">
           <input type="hidden" name="order_id" value="<?= $o['id'] ?>">
           <label style="font-size:.8rem;color:var(--adm-muted)">Update status:</label>
@@ -556,7 +556,7 @@ function statusBadge(string $status, array $map): string {
         </td>
         <td><code style="background:var(--adm-bg);padding:.2rem .5rem;border-radius:.3rem;font-size:.8rem"><?= h($c['handle']) ?></code></td>
         <td>
-          <a href="/store-php/admin.php?tab=products" style="color:var(--adm-primary);text-decoration:none">
+          <a href="<?= BASE_URL ?>/admin.php?tab=products" style="color:var(--adm-primary);text-decoration:none">
             <?= $c['product_count'] ?> product<?= $c['product_count']!=1?'s':'' ?>
           </a>
         </td>
@@ -565,7 +565,7 @@ function statusBadge(string $status, array $map): string {
           <div class="adm-row-actions">
             <button class="adm-icon-btn edit" title="Edit"
               onclick='editCollection(<?= json_encode(["id"=>$c["id"],"title"=>$c["title"],"description"=>$c["description"]??"","is_visible"=>$c["is_visible"]]) ?>)'>✏️</button>
-            <form method="post" action="/store-php/admin.php?tab=collections" style="display:inline"
+            <form method="post" action="<?= BASE_URL ?>/admin.php?tab=collections" style="display:inline"
                   onsubmit="return confirm('Delete &quot;<?= h(addslashes($c['title'])) ?>&quot;? Products will be unlinked from this collection.')">
               <input type="hidden" name="action" value="delete_collection">
               <input type="hidden" name="id"     value="<?= $c['id'] ?>">
@@ -615,7 +615,7 @@ function statusBadge(string $status, array $map): string {
         'maintenance'  => ['icon'=>'🔧','label'=>'Maintenance'],
       ];
       foreach($sections as $key => $s): ?>
-        <a href="/store-php/admin.php?tab=settings&section=<?= $key ?>"
+        <a href="<?= BASE_URL ?>/admin.php?tab=settings&section=<?= $key ?>"
            class="adm-settings-nav-item <?= $section===$key?'active':'' ?>">
           <span><?= $s['icon'] ?></span> <?= $s['label'] ?>
         </a>
@@ -624,7 +624,7 @@ function statusBadge(string $status, array $map): string {
 
     <!-- Settings form panel -->
     <div class="adm-settings-content">
-      <form method="post" action="/store-php/admin.php?tab=settings&section=<?= h($section) ?>" class="adm-settings-form">
+      <form method="post" action="<?= BASE_URL ?>/admin.php?tab=settings&section=<?= h($section) ?>" class="adm-settings-form">
         <input type="hidden" name="action"  value="save_settings">
         <input type="hidden" name="section" value="<?= h($section) ?>">
 
@@ -685,7 +685,7 @@ function statusBadge(string $status, array $map): string {
           </div>
           <div class="adm-form-group">
             <label>Button 1 URL</label>
-            <input type="text" name="hero_btn1_url" value="<?= h($cfg['hero_btn1_url']??'/store-php/shop.php') ?>">
+            <input type="text" name="hero_btn1_url" value="<?= h($cfg['hero_btn1_url']??'/shop.php') ?>">
           </div>
           <div class="adm-form-group">
             <label>Button 2 Text</label>
@@ -865,7 +865,7 @@ function statusBadge(string $status, array $map): string {
       <h2 id="modal-title">Add Product</h2>
       <button class="adm-modal-close" onclick="closeModal('product-modal')">✕</button>
     </div>
-    <form id="product-form" method="post" action="/store-php/admin.php?tab=products" class="adm-form">
+    <form id="product-form" method="post" action="<?= BASE_URL ?>/admin.php?tab=products" class="adm-form">
       <input type="hidden" name="action" value="save_product">
       <input type="hidden" name="id"     value="">
 
@@ -961,7 +961,7 @@ function statusBadge(string $status, array $map): string {
       <h2 id="col-modal-title">Add Collection</h2>
       <button class="adm-modal-close" onclick="closeModal('collection-modal')">✕</button>
     </div>
-    <form id="collection-form" method="post" action="/store-php/admin.php?tab=collections" class="adm-form">
+    <form id="collection-form" method="post" action="<?= BASE_URL ?>/admin.php?tab=collections" class="adm-form">
       <input type="hidden" name="action" value="save_collection">
       <input type="hidden" name="id"     value="">
 
@@ -993,7 +993,7 @@ function statusBadge(string $status, array $map): string {
   </div>
 </div>
 
-<script src="/store-php/assets/app.js"></script>
+<script src="<?= BASE_URL ?>/assets/app.js"></script>
 <script>
 const USD_TO_RWF = <?= USD_TO_RWF ?>;
 
@@ -1118,7 +1118,7 @@ function uploadFile(file) {
   fd.append('image', file);
 
   const xhr = new XMLHttpRequest();
-  xhr.open('POST', '/store-php/ajax/upload_image.php');
+  xhr.open('POST', '<?= BASE_URL ?>/ajax/upload_image.php');
 
   xhr.upload.onprogress = (e) => {
     if (e.lengthComputable) {

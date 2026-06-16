@@ -3,7 +3,7 @@ require_once __DIR__ . '/layout.php';
 
 $user = getCurrentUser();
 if (!$user) {
-    header('Location: /store-php/login.php');
+    header('Location: ' . BASE_URL . '/login.php');
     exit;
 }
 
@@ -18,7 +18,6 @@ $stmt  = $pdo->prepare(
 $stmt->execute([$user['email']]);
 $orders = $stmt->fetchAll();
 
-// Load items for each order
 foreach ($orders as &$o) {
     $s = $pdo->prepare("SELECT * FROM ecom_order_items WHERE order_id=?");
     $s->execute([$o['id']]);
@@ -36,7 +35,7 @@ startPage('My Orders');
   <div class="empty-state">
     <div class="empty-icon">📦</div>
     <h2 style="font-size:1.4rem">No orders yet.</h2>
-    <a href="/store-php/shop.php" style="display:inline-block;margin-top:1rem;color:var(--green);font-weight:500">Start shopping</a>
+    <a href="<?= BASE_URL ?>/shop.php" style="display:inline-block;margin-top:1rem;color:var(--green);font-weight:500">Start shopping</a>
   </div>
   <?php else: ?>
   <div class="space-y-lg">

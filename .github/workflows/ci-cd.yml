@@ -70,7 +70,7 @@ jobs:
 
       - name: Check key pages respond
         run: |
-          for PAGE in "/store-php/" "/store-php/shop.php" "/store-php/login.php" "/store-php/register.php" "/store-php/cart.php"; do
+          for PAGE in "/" "/shop.php" "/login.php" "/register.php" "/cart.php"; do
             STATUS=$(curl -o /dev/null -s -w "%{http_code}" http://localhost:8080$PAGE)
             echo "  $PAGE → HTTP $STATUS"
             if [ "$STATUS" -ne 200 ] && [ "$STATUS" -ne 302 ]; then

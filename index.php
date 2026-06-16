@@ -61,11 +61,11 @@ $catIcons = [
     <p><?= h(getSetting('hero_subtitle','Shop quality fruits, vegetables, dairy and more — delivered straight to your door with free shipping.')) ?></p>
 
     <div class="hero-btns">
-      <a href="<?= h(getSetting('hero_btn1_url','/store-php/shop.php')) ?>" class="btn btn-green">
+      <a href="<?= BASE_URL ?>/shop.php" class="btn btn-green">
         <?= h(getSetting('hero_btn1_text','Shop Now')) ?>
       </a>
 
-      <a href="<?= h(getSetting('hero_btn2_url','/store-php/collection.php?handle=fruits')) ?>" class="btn btn-white">
+      <a href="<?= BASE_URL ?>/collection.php?handle=fruits" class="btn btn-white">
         <?= h(getSetting('hero_btn2_text','Browse Fruits')) ?>
       </a>
     </div>
@@ -111,7 +111,7 @@ $catIcons = [
     <?php foreach ($collections as $c):
       $icon = $catIcons[$c['title']] ?? '🛒';
     ?>
-      <a href="/store-php/collection.php?handle=<?= h($c['handle']) ?>" class="category-card">
+      <a href="<?= BASE_URL ?>/collection.php?handle=<?= h($c['handle']) ?>" class="category-card">
         <span class="category-card-icon"><?= $icon ?></span>
         <?= h($c['title']) ?>
       </a>
@@ -123,7 +123,7 @@ $catIcons = [
 <div class="section" style="padding-top:0">
   <div class="section-header">
     <h2 class="section-title" style="margin:0">Featured Products</h2>
-    <a href="/store-php/shop.php">View all →</a>
+    <a href="<?= BASE_URL ?>/shop.php">View all →</a>
   </div>
 
   <div class="product-grid">
@@ -134,7 +134,7 @@ $catIcons = [
       $tags   = json_decode($p['tags'] ?? '[]', true);
     ?>
 
-      <a href="/store-php/product.php?handle=<?= h($p['handle']) ?>" class="product-card">
+      <a href="<?= BASE_URL ?>/product.php?handle=<?= h($p['handle']) ?>" class="product-card">
 
         <div class="product-card-img">
           <img src="<?= h($img) ?>" alt="<?= h($p['name']) ?>" loading="lazy" />
@@ -164,7 +164,7 @@ $catIcons = [
             <span class="product-price"><?= formatPrice($p['price']) ?></span>
 
             <button class="add-btn"
-                    onclick="event.preventDefault();addToCart(<?= (int)$p['id'] ?>)"
+              onclick="event.preventDefault();addToCart(<?= (int)$p['id'] ?>)"
                     aria-label="Add to cart">
               +
             </button>

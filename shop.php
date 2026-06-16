@@ -7,7 +7,6 @@ $sort       = $_GET['sort'] ?? 'default';
 
 $pdo = getDB();
 
-// Build query — join reviews for avg rating in one shot
 $where  = ["p.status = 'active'"];
 $params = [];
 
@@ -39,7 +38,6 @@ $stmt = $pdo->prepare($sql);
 $stmt->execute($params);
 $products = $stmt->fetchAll();
 
-// Get types for sidebar
 $types = $pdo->query(
     "SELECT DISTINCT product_type FROM ecom_products WHERE status='active' AND product_type IS NOT NULL ORDER BY product_type"
 )->fetchAll(PDO::FETCH_COLUMN);
@@ -58,14 +56,13 @@ startPage($title);
   <p class="product-count"><?= count($products) ?> product<?= count($products) !== 1 ? 's' : '' ?></p>
 
   <div class="shop-layout">
-    <!-- Sidebar filters -->
     <aside class="shop-sidebar">
       <h3>Categories</h3>
       <div class="filter-btns">
-        <a href="/store-php/shop.php?<?= $q ? 'q='.urlencode($q).'&' : '' ?>sort=<?= h($sort) ?>"
+        <a href="<?= BASE_URL ?>/shop.php?<?= $q ? 'q='.urlencode($q).'&' : '' ?>sort=<?= h($sort) ?>"
            class="filter-btn <?= $typeFilter === 'all' ? 'active' : '' ?>">🛒 All</a>
         <?php foreach ($types as $t): ?>
-        <a href="/store-php/shop.php?<?= $q ? 'q='.urlencode($q).'&' : '' ?>type=<?= urlencode($t) ?>&sort=<?= h($sort) ?>"
+        <a href="<?= BASE_URL ?>/shop.php?<?= $q ? 'q='.urlencode($q).'&' : '' ?>type=<?= urlencode($t) ?>&sort=<?= h($sort) ?>"
            class="filter-btn <?= $typeFilter === $t ? 'active' : '' ?>">
           <?= $catIcons[$t] ?? '' ?> <?= h($t) ?>
         </a>
@@ -73,10 +70,9 @@ startPage($title);
       </div>
     </aside>
 
-    <!-- Main product area -->
     <div class="shop-main">
       <div class="shop-top">
-        <form method="get" action="/store-php/shop.php">
+        <form method="get" action="<?= BASE_URL ?>/shop.php">
           <?php if ($q): ?><input type="hidden" name="q" value="<?= h($q) ?>"><?php endif; ?>
           <?php if ($typeFilter !== 'all'): ?><input type="hidden" name="type" value="<?= h($typeFilter) ?>"><?php endif; ?>
           <select name="sort" onchange="this.form.submit()">
@@ -93,7 +89,7 @@ startPage($title);
           <div class="empty-icon">🔍</div>
           <h2>No products found</h2>
           <p>Try a different search or category.</p>
-          <a href="/store-php/shop.php" class="btn btn-green" style="margin-top:1rem">Clear filters</a>
+          <a href="<?= BASE_URL ?>/shop.php" class="btn btn-green" style="margin-top:1rem">Clear filters</a>
         </div>
       <?php else: ?>
       <div class="product-grid">
@@ -102,7 +98,7 @@ startPage($title);
           $img    = $images[0] ?? '';
           $tags   = json_decode($p['tags'] ?? '[]', true);
         ?>
-        <a href="/store-php/product.php?handle=<?= h($p['handle']) ?>" class="product-card">
+        <a href="<?= BASE_URL ?>/product.php?handle=<?= h($p['handle']) ?>" class="product-card">
           <div class="product-card-img">
             <img src="<?= h($img) ?>" alt="<?= h($p['name']) ?>" loading="lazy" />
             <?php if (in_array('featured', $tags)): ?>

@@ -2,7 +2,7 @@
 require_once __DIR__ . '/layout.php';
 
 $handle = trim($_GET['handle'] ?? '');
-if (!$handle) { header('Location: /store-php/shop.php'); exit; }
+if (!$handle) { header('Location: ' . BASE_URL . '/shop.php'); exit; }
 
 $pdo  = getDB();
 $stmt = $pdo->prepare("SELECT * FROM ecom_products WHERE handle = ? AND status = 'active'");
@@ -21,12 +21,10 @@ $img     = $images[0] ?? '';
 $inStock = ($p['inventory_qty'] === null || $p['inventory_qty'] > 0);
 $user    = getCurrentUser();
 
-// Related products
 $stmt = $pdo->prepare("SELECT * FROM ecom_products WHERE product_type=? AND status='active' AND id<>? LIMIT 4");
 $stmt->execute([$p['product_type'], $p['id']]);
 $related = $stmt->fetchAll();
 
-// Reviews
 $stmt = $pdo->prepare("SELECT * FROM product_reviews WHERE product_id=? ORDER BY created_at DESC");
 $stmt->execute([$p['id']]);
 $reviews = $stmt->fetchAll();
@@ -39,7 +37,6 @@ if ($user) {
     }
 }
 
-// Handle review submission
 $reviewError = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'review') {
     if (!$user) {
@@ -55,7 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                  VALUES (?, ?, ?, ?, ?)
                  ON DUPLICATE KEY UPDATE rating=VALUES(rating), comment=VALUES(comment)"
             )->execute([$p['id'], $user['id'], $user['full_name'] ?: $user['email'], $rating, $comment]);
-            header("Location: /store-php/product.php?handle=" . urlencode($handle) . "#reviews");
+            header("Location: " . BASE_URL . "/product.php?handle=" . urlencode($handle) . "#reviews");
             exit;
         }
     }
@@ -65,18 +62,14 @@ startPage($p['name']);
 ?>
 
 <div class="section">
-  <!-- Breadcrumb -->
   <div class="breadcrumb">
-    <a href="/store-php/shop.php">← Back to shop</a>
+    <a href="<?= BASE_URL ?>/shop.php">← Back to shop</a>
   </div>
 
   <div class="product-detail-grid">
-    <!-- Image -->
     <div class="product-detail-img">
       <img src="<?= h($img) ?>" alt="<?= h($p['name']) ?>" />
     </div>
-
-    <!-- Info -->
     <div>
       <div class="product-detail-type"><?= h($p['product_type'] ?? '') ?></div>
       <h1 class="product-detail-name"><?= h($p['name']) ?></h1>
@@ -97,7 +90,6 @@ startPage($p['name']);
     </div>
   </div>
 
-  <!-- Reviews -->
   <div class="reviews-section" id="reviews">
     <div class="reviews-header">
       <h2>Reviews</h2>
@@ -118,7 +110,7 @@ startPage($p['name']);
       <?php if ($reviewError): ?>
         <div class="alert alert-red"><?= h($reviewError) ?></div>
       <?php endif; ?>
-      <form method="post" action="/store-php/product.php?handle=<?= h($handle) ?>#reviews">
+      <form method="post" action="<?= BASE_URL ?>/product.php?handle=<?= h($handle) ?>#reviews">
         <input type="hidden" name="action" value="review" />
         <div class="stars-input" aria-label="Rating">
           <?php for ($i = 1; $i <= 5; $i++): ?>
@@ -132,7 +124,7 @@ startPage($p['name']);
     </div>
     <?php else: ?>
     <div class="review-form" style="background:var(--gray-50)">
-      <p style="color:var(--gray-600)"><a href="/store-php/login.php" class="link-green">Sign in</a> to leave a review.</p>
+      <p style="color:var(--gray-600)"><a href="<?= BASE_URL ?>/login.php" class="link-green">Sign in</a> to leave a review.</p>
     </div>
     <?php endif; ?>
 
@@ -159,7 +151,6 @@ startPage($p['name']);
     </div>
   </div>
 
-  <!-- Related products -->
   <?php if (!empty($related)): ?>
   <div style="margin-top:4rem">
     <h2 class="section-title">Related Products</h2>
@@ -168,7 +159,7 @@ startPage($p['name']);
         $rimgs = json_decode($rp['images'] ?? '[]', true);
         $rimg  = $rimgs[0] ?? '';
       ?>
-      <a href="/store-php/product.php?handle=<?= h($rp['handle']) ?>" class="product-card">
+      <a href="<?= BASE_URL ?>/product.php?handle=<?= h($rp['handle']) ?>" class="product-card">
         <div class="product-card-img">
           <img src="<?= h($rimg) ?>" alt="<?= h($rp['name']) ?>" loading="lazy" />
         </div>
