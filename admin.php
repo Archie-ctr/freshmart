@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/functions.php';
+require_once __DIR__ . '/mailer.php';
 if (session_status() === PHP_SESSION_NONE) session_start();
 
 $user = getCurrentUser();
@@ -73,7 +74,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $pdo->prepare("DELETE FROM ecom_product_collections WHERE product_id=?")->execute([$productId]);
             $pdo->prepare("INSERT INTO ecom_product_collections (product_id,collection_id,position) VALUES (?,?,0)")->execute([$productId,$col['id']]);
         }
-        header('Location: <?= BASE_URL ?>/admin.php?tab=products'); exit;
+        // Email all customers about the new product
+        if (!$id) {
+            $newProduct = $pdo->prepare('SELECT * FROM ecom_products WHERE id=?');
+            $newProduct->execute([$productId]);
+            $newProduct = $newProduct->fetch();
+            if ($newProduct) {
+                $allCustomers = $pdo->query("SELECT email, full_name FROM profiles WHERE role='customer'")->fetchAll();
+                foreach ($allCustomers as $cust) {
+                    sendNewProductEmail($cust['email'], $cust['full_name'] ?: 'Customer', $newProduct);
+                }
+            }
+        }
+        header('Location: ' . BASE_URL . '/admin.php?tab=products'); exit;
     }
 
     if ($action === 'delete_product') {
@@ -122,9 +135,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $orderId = (int)$_POST['order_id'];
         $status  = $_POST['status'] ?? 'paid';
         $allowed = ['pending','paid','processing','shipped','delivered','cancelled'];
-        if (in_array($status, $allowed))
-            $pdo->prepare("UPDATE ecom_orders SET status=? WHERE id=?")->execute([$status,$orderId]);
-        header('Location: <?= BASE_URL ?>/admin.php?tab=orders'); exit;
+        if (in_array($status, $allowed)) {
+            $pdo->prepare("UPDATE ecom_orders SET status=? WHERE id=?")->execute([$status, $orderId]);
+            // Send tracking update email to customer
+            $orderRow = $pdo->prepare(
+                "SELECT o.*, c.email, c.name AS cust_name FROM ecom_orders o
+                 LEFT JOIN ecom_customers c ON c.id=o.customer_id WHERE o.id=?"
+            );
+            $orderRow->execute([$orderId]);
+            $orderRow = $orderRow->fetch();
+            if ($orderRow && !empty($orderRow['email'])) {
+                sendOrderStatusEmail($orderRow['email'], $orderRow['cust_name'] ?? 'Customer', $orderId, $status);
+            }
+        }
+        header('Location: ' . BASE_URL . '/admin.php?tab=orders'); exit;
     }
 
     if ($action === 'save_settings') {
