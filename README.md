@@ -193,3 +193,5 @@ store-php/
 ## 📄 License
 
 MIT — free to use for educational purposes.
+
+<!-- Last updated: CI/CD pipeline fix -->
