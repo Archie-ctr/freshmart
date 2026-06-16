@@ -52,6 +52,7 @@ function startPage(string $title = 'FreshMart'): void {
           <?php else: ?>
             <div class="dropdown-email"><?= h($user['email']) ?></div>
             <a href="<?= BASE_URL ?>/orders.php">My Orders</a>
+            <a href="<?= BASE_URL ?>/wishlist.php">❤️ Wishlist</a>
             <?php if ($user['role'] === 'admin'): ?>
               <a href="<?= BASE_URL ?>/admin.php">⚙ Admin</a>
             <?php endif; ?>
@@ -140,6 +141,7 @@ function endPage(): void {
           <li><a href="<?= BASE_URL ?>/login.php">Sign In</a></li>
           <li><a href="<?= BASE_URL ?>/register.php">Create Account</a></li>
           <li><a href="<?= BASE_URL ?>/orders.php">My Orders</a></li>
+          <li><a href="<?= BASE_URL ?>/wishlist.php">❤️ Wishlist</a></li>
           <li><a href="<?= BASE_URL ?>/cart.php">View Cart</a></li>
           <li><a href="<?= BASE_URL ?>/admin.php">Admin Dashboard</a></li>
         </ul>

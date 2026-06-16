@@ -141,6 +141,39 @@ SELECT p.id, c.id, 0
 FROM ecom_products p
 JOIN ecom_collections c ON c.title = p.product_type;
 
+-- ── Analytics: page views ──────────────────────────────────
+CREATE TABLE IF NOT EXISTS page_views (
+    id         INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    page       VARCHAR(255) NOT NULL,
+    product_id INT UNSIGNED NULL,
+    ip_hash    VARCHAR(64),
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_page (page),
+    INDEX idx_product (product_id),
+    INDEX idx_date (created_at)
+) ENGINE=InnoDB;
+
+-- ── Wishlists ─────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS wishlists (
+    id         INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id    INT UNSIGNED NOT NULL,
+    product_id INT UNSIGNED NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_wish (user_id, product_id),
+    FOREIGN KEY (user_id)    REFERENCES profiles(id)      ON DELETE CASCADE,
+    FOREIGN KEY (product_id) REFERENCES ecom_products(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- ── Rate limiting ─────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS rate_limit (
+    id         INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    ip_hash    VARCHAR(64) NOT NULL,
+    action     VARCHAR(50) NOT NULL,
+    hits       INT NOT NULL DEFAULT 1,
+    window_start DATETIME NOT NULL,
+    INDEX idx_rl (ip_hash, action, window_start)
+) ENGINE=InnoDB;
+
 -- ── Shop Settings ───────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS shop_settings (
   id          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,

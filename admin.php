@@ -152,6 +152,87 @@ $monthOrders = (int)$pdo->query(
     "SELECT COUNT(*) FROM ecom_orders WHERE MONTH(created_at)=MONTH(NOW()) AND YEAR(created_at)=YEAR(NOW())"
 )->fetchColumn();
 
+// ── Analytics data ───────────────────────────────────────────
+$analytics = [];
+if ($tab === 'analytics') {
+    // Daily orders last 30 days
+    $analytics['daily_orders'] = $pdo->query(
+        "SELECT DATE(created_at) AS day, COUNT(*) AS orders, SUM(total) AS revenue
+         FROM ecom_orders WHERE created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+         AND status != 'cancelled' GROUP BY DATE(created_at) ORDER BY day ASC"
+    )->fetchAll();
+    // Top products by revenue
+    $analytics['top_products'] = $pdo->query(
+        "SELECT p.name, SUM(oi.total) AS revenue, SUM(oi.quantity) AS units_sold
+         FROM ecom_order_items oi JOIN ecom_products p ON p.id=oi.product_id
+         GROUP BY oi.product_id ORDER BY revenue DESC LIMIT 5"
+    )->fetchAll();
+    // Most viewed products
+    $analytics['top_viewed'] = $pdo->query(
+        "SELECT p.name, COUNT(*) AS views
+         FROM page_views pv JOIN ecom_products p ON p.id=pv.product_id
+         WHERE pv.product_id IS NOT NULL
+         GROUP BY pv.product_id ORDER BY views DESC LIMIT 5"
+    )->fetchAll();
+    // Orders by status
+    $analytics['by_status'] = $pdo->query(
+        "SELECT status, COUNT(*) AS cnt FROM ecom_orders GROUP BY status"
+    )->fetchAll();
+    // Revenue by category
+    $analytics['by_category'] = $pdo->query(
+        "SELECT p.product_type, SUM(oi.total) AS revenue
+         FROM ecom_order_items oi JOIN ecom_products p ON p.id=oi.product_id
+         GROUP BY p.product_type ORDER BY revenue DESC"
+    )->fetchAll();
+    // Total page views today
+    $analytics['views_today'] = (int)$pdo->query(
+        "SELECT COUNT(*) FROM page_views WHERE DATE(created_at)=CURDATE()"
+    )->fetchColumn();
+    // Wishlisted products
+    $analytics['top_wishlisted'] = $pdo->query(
+        "SELECT p.name, COUNT(*) AS cnt FROM wishlists w
+         JOIN ecom_products p ON p.id=w.product_id
+         GROUP BY w.product_id ORDER BY cnt DESC LIMIT 5"
+    )->fetchAll();
+}
+
+// ── Analytics data ───────────────────────────────────────────
+$analytics = [];
+if ($tab === 'analytics') {
+    $analytics['daily_orders'] = $pdo->query(
+        "SELECT DATE(created_at) AS day, COUNT(*) AS orders, SUM(total) AS revenue
+         FROM ecom_orders WHERE created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+         AND status != 'cancelled' GROUP BY DATE(created_at) ORDER BY day ASC"
+    )->fetchAll();
+    $analytics['top_products'] = $pdo->query(
+        "SELECT p.name, SUM(oi.total) AS revenue, SUM(oi.quantity) AS units_sold
+         FROM ecom_order_items oi JOIN ecom_products p ON p.id=oi.product_id
+         GROUP BY oi.product_id ORDER BY revenue DESC LIMIT 5"
+    )->fetchAll();
+    $analytics['top_viewed'] = $pdo->query(
+        "SELECT p.name, COUNT(*) AS views
+         FROM page_views pv JOIN ecom_products p ON p.id=pv.product_id
+         WHERE pv.product_id IS NOT NULL
+         GROUP BY pv.product_id ORDER BY views DESC LIMIT 5"
+    )->fetchAll();
+    $analytics['by_status'] = $pdo->query(
+        "SELECT status, COUNT(*) AS cnt FROM ecom_orders GROUP BY status"
+    )->fetchAll();
+    $analytics['by_category'] = $pdo->query(
+        "SELECT p.product_type, SUM(oi.total) AS revenue
+         FROM ecom_order_items oi JOIN ecom_products p ON p.id=oi.product_id
+         GROUP BY p.product_type ORDER BY revenue DESC"
+    )->fetchAll();
+    $analytics['views_today'] = (int)$pdo->query(
+        "SELECT COUNT(*) FROM page_views WHERE DATE(created_at)=CURDATE()"
+    )->fetchColumn();
+    $analytics['top_wishlisted'] = $pdo->query(
+        "SELECT p.name, COUNT(*) AS cnt FROM wishlists w
+         JOIN ecom_products p ON p.id=w.product_id
+         GROUP BY w.product_id ORDER BY cnt DESC LIMIT 5"
+    )->fetchAll();
+}
+
 $statusColors = [
     'pending'    => ['bg'=>'#fff7ed','color'=>'#c2410c','dot'=>'#f97316'],
     'paid'       => ['bg'=>'#f0fdf4','color'=>'#15803d','dot'=>'#22c55e'],
@@ -213,6 +294,9 @@ function statusBadge(string $status, array $map): string {
     </a>
     <a href="<?= BASE_URL ?>/admin.php?tab=collections" class="adm-nav-item <?= $tab==='collections'?'active':'' ?>">
       <span class="adm-nav-icon">🗂</span> Collections
+    </a>
+    <a href="<?= BASE_URL ?>/admin.php?tab=analytics" class="adm-nav-item <?= $tab==='analytics'?'active':'' ?>">
+      <span class="adm-nav-icon">📊</span> Analytics
     </a>
     <a href="<?= BASE_URL ?>/admin.php?tab=settings" class="adm-nav-item <?= $tab==='settings'?'active':'' ?>">
       <span class="adm-nav-icon">⚙️</span> Settings
@@ -580,6 +664,180 @@ function statusBadge(string $status, array $map): string {
     <?php endif?>
   </div>
   <?php endif?>
+
+  <?php if($tab==='analytics'): ?>
+  <!-- ═════════════════════ ANALYTICS ═════════════════════ -->
+  <div class="adm-page-header">
+    <div><h1 class="adm-page-title">Analytics Dashboard</h1>
+    <p class="adm-page-sub">Real-time store performance insights</p></div>
+  </div>
+
+  <!-- KPI row -->
+  <div class="adm-kpi-grid" style="margin-bottom:2rem">
+    <div class="adm-kpi-card">
+      <div class="adm-kpi-icon" style="background:#f0fdf4;color:#16a34a">👁</div>
+      <div class="adm-kpi-body">
+        <div class="adm-kpi-label">Page Views Today</div>
+        <div class="adm-kpi-value"><?= number_format($analytics['views_today']) ?></div>
+      </div>
+    </div>
+    <div class="adm-kpi-card">
+      <div class="adm-kpi-icon" style="background:#eff6ff;color:#2563eb">📊</div>
+      <div class="adm-kpi-body">
+        <div class="adm-kpi-label">Orders (30 days)</div>
+        <div class="adm-kpi-value"><?= array_sum(array_column($analytics['daily_orders'],'orders')) ?></div>
+      </div>
+    </div>
+    <div class="adm-kpi-card">
+      <div class="adm-kpi-icon" style="background:#fdf4ff;color:#9333ea">❤️</div>
+      <div class="adm-kpi-body">
+        <div class="adm-kpi-label">Wishlisted Items</div>
+        <div class="adm-kpi-value"><?= array_sum(array_column($analytics['top_wishlisted'],'cnt')) ?></div>
+      </div>
+    </div>
+    <div class="adm-kpi-card">
+      <div class="adm-kpi-icon" style="background:#fff7ed;color:#ea580c">💰</div>
+      <div class="adm-kpi-body">
+        <div class="adm-kpi-label">Revenue (30 days)</div>
+        <div class="adm-kpi-value" style="font-size:1rem"><?= formatPrice((int)array_sum(array_column($analytics['daily_orders'],'revenue'))) ?></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="adm-dash-grid">
+
+    <!-- Daily Revenue Chart -->
+    <div class="adm-panel">
+      <div class="adm-panel-head"><h2>📈 Revenue Last 30 Days</h2></div>
+      <canvas id="revenueChart" height="120"></canvas>
+    </div>
+
+    <!-- Orders by Status -->
+    <div style="display:flex;flex-direction:column;gap:1.5rem">
+      <div class="adm-panel">
+        <div class="adm-panel-head"><h2>🎯 Orders by Status</h2></div>
+        <?php foreach($analytics['by_status'] as $s): ?>
+        <div style="display:flex;justify-content:space-between;padding:.4rem 0;font-size:.875rem;border-bottom:1px solid var(--adm-border)">
+          <span><?= statusBadge($s['status'],$statusColors) ?></span>
+          <strong><?= $s['cnt'] ?></strong>
+        </div>
+        <?php endforeach; ?>
+      </div>
+
+      <!-- Top Wishlisted -->
+      <div class="adm-panel">
+        <div class="adm-panel-head"><h2>❤️ Top Wishlisted</h2></div>
+        <?php if(empty($analytics['top_wishlisted'])): ?>
+          <p style="font-size:.85rem;color:var(--adm-muted)">No wishlist data yet.</p>
+        <?php else: ?>
+        <?php foreach($analytics['top_wishlisted'] as $w): ?>
+        <div style="display:flex;justify-content:space-between;padding:.4rem 0;font-size:.875rem;border-bottom:1px solid var(--adm-border)">
+          <span><?= h($w['name']) ?></span><strong><?= $w['cnt'] ?> ♥</strong>
+        </div>
+        <?php endforeach; ?>
+        <?php endif; ?>
+      </div>
+    </div>
+  </div>
+
+  <!-- Top Products + Most Viewed + Category Revenue -->
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.5rem;margin-top:1.5rem">
+
+    <div class="adm-panel">
+      <div class="adm-panel-head"><h2>🏆 Top Products by Revenue</h2></div>
+      <?php if(empty($analytics['top_products'])): ?>
+        <p style="font-size:.85rem;color:var(--adm-muted)">No sales yet.</p>
+      <?php else: ?>
+      <?php foreach($analytics['top_products'] as $i => $tp): ?>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:.5rem 0;border-bottom:1px solid var(--adm-border);font-size:.85rem">
+        <span><strong style="color:var(--adm-primary)">#<?= $i+1 ?></strong> <?= h($tp['name']) ?><br>
+        <small style="color:var(--adm-muted)"><?= $tp['units_sold'] ?> units sold</small></span>
+        <span><?= formatPrice((int)$tp['revenue']) ?></span>
+      </div>
+      <?php endforeach; ?>
+      <?php endif; ?>
+    </div>
+
+    <div class="adm-panel">
+      <div class="adm-panel-head"><h2>👁 Most Viewed Products</h2></div>
+      <?php if(empty($analytics['top_viewed'])): ?>
+        <p style="font-size:.85rem;color:var(--adm-muted)">No view data yet.</p>
+      <?php else: ?>
+      <?php foreach($analytics['top_viewed'] as $i => $tv): ?>
+      <div style="display:flex;justify-content:space-between;padding:.5rem 0;border-bottom:1px solid var(--adm-border);font-size:.85rem">
+        <span><strong style="color:var(--adm-primary)">#<?= $i+1 ?></strong> <?= h($tv['name']) ?></span>
+        <strong><?= number_format($tv['views']) ?> views</strong>
+      </div>
+      <?php endforeach; ?>
+      <?php endif; ?>
+    </div>
+
+    <div class="adm-panel">
+      <div class="adm-panel-head"><h2>📂 Revenue by Category</h2></div>
+      <?php if(empty($analytics['by_category'])): ?>
+        <p style="font-size:.85rem;color:var(--adm-muted)">No sales yet.</p>
+      <?php else: ?>
+      <?php
+      $catTotal = array_sum(array_column($analytics['by_category'],'revenue')) ?: 1;
+      $catIcons2 = ['Fruits'=>'🍎','Vegetables'=>'🥦','Dairy'=>'🥛','Beverages'=>'🧃','Bakery'=>'🍞','Snacks'=>'🏿'];
+      foreach($analytics['by_category'] as $cat):
+        $pct = round($cat['revenue']/$catTotal*100);
+      ?>
+      <div style="margin-bottom:.75rem">
+        <div style="display:flex;justify-content:space-between;font-size:.82rem;margin-bottom:.25rem">
+          <span><?= ($catIcons2[$cat['product_type']]??'📦').' '.h($cat['product_type']) ?></span>
+          <span><?= $pct ?>%</span>
+        </div>
+        <div style="background:var(--adm-border);border-radius:9999px;height:.5rem">
+          <div style="background:var(--adm-primary);width:<?= $pct ?>%;height:.5rem;border-radius:9999px"></div>
+        </div>
+      </div>
+      <?php endforeach; ?>
+      <?php endif; ?>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+  <script>
+  (function(){
+    const labels = <?= json_encode(array_column($analytics['daily_orders'],'day')) ?>;
+    const revenue = <?= json_encode(array_map(fn($r)=>round($r['revenue']/100,2), $analytics['daily_orders'])) ?>;
+    const orders  = <?= json_encode(array_column($analytics['daily_orders'],'orders')) ?>;
+    const ctx = document.getElementById('revenueChart');
+    if (!ctx) return;
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Revenue (USD)',
+          data: revenue,
+          backgroundColor: 'rgba(72,187,120,.6)',
+          borderColor: '#48bb78',
+          borderWidth: 1,
+          yAxisID: 'y'
+        },{
+          label: 'Orders',
+          data: orders,
+          type: 'line',
+          borderColor: '#3b82f6',
+          backgroundColor: 'rgba(59,130,246,.1)',
+          tension: .4,
+          yAxisID: 'y1'
+        }]
+      },
+      options: {
+        responsive: true,
+        interaction: { mode: 'index', intersect: false },
+        scales: {
+          y:  { position: 'left',  title: { display:true, text:'Revenue ($)' } },
+          y1: { position: 'right', title: { display:true, text:'Orders' }, grid: { drawOnChartArea:false } }
+        }
+      }
+    });
+  })();
+  </script>
+  <?php endif; ?>
 
   <?php if($tab==='settings'):
     $section = $_GET['section'] ?? 'general';

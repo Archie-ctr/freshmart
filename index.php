@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/layout.php';
 startPage('Home');
+trackPageView('home');
 
 $featured = [];
 $collections = [];

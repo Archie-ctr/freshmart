@@ -49,6 +49,7 @@ $catIcons = [
 
 $title = $q ? "Search: \"$q\"" : 'All Products';
 startPage($title);
+trackPageView('shop');
 ?>
 
 <div class="section">

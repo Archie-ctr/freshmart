@@ -16,14 +16,24 @@ if (!$p) {
     exit;
 }
 
+// Track page view for analytics + AI recommendations
+trackPageView('product', $p['id']);
+
 $images  = json_decode($p['images'] ?? '[]', true);
 $img     = $images[0] ?? '';
 $inStock = ($p['inventory_qty'] === null || $p['inventory_qty'] > 0);
 $user    = getCurrentUser();
 
-$stmt = $pdo->prepare("SELECT * FROM ecom_products WHERE product_type=? AND status='active' AND id<>? LIMIT 4");
-$stmt->execute([$p['product_type'], $p['id']]);
-$related = $stmt->fetchAll();
+// Wishlist status
+$wishlisted = false;
+if ($user) {
+    $ws = $pdo->prepare("SELECT id FROM wishlists WHERE user_id=? AND product_id=?");
+    $ws->execute([$user['id'], $p['id']]);
+    $wishlisted = (bool)$ws->fetch();
+}
+
+// AI-powered recommendations
+$recommended = getRecommendations($p['id'], $p['product_type']);
 
 $stmt = $pdo->prepare("SELECT * FROM product_reviews WHERE product_id=? ORDER BY created_at DESC");
 $stmt->execute([$p['id']]);
@@ -86,10 +96,50 @@ startPage($p['name']);
         <button type="submit" class="btn btn-green" <?= $inStock ? '' : 'disabled' ?> style="flex:1" id="add-btn">
           🛒 <?= $inStock ? 'Add to Cart' : 'Out of Stock' ?>
         </button>
+        <!-- Wishlist button -->
+        <?php if ($user): ?>
+        <button type="button" id="wish-btn"
+          onclick="toggleWishlist(<?= $p['id'] ?>)"
+          class="btn btn-outline" style="padding:.75rem 1rem"
+          title="<?= $wishlisted ? 'Remove from wishlist' : 'Add to wishlist' ?>">
+          <?= $wishlisted ? '❤️' : '🤍' ?>
+        </button>
+        <?php else: ?>
+        <a href="<?= BASE_URL ?>/login.php" class="btn btn-outline" style="padding:.75rem 1rem" title="Login to wishlist">🤍</a>
+        <?php endif; ?>
       </form>
     </div>
   </div>
 
+  <!-- ── AI Recommendations ── -->
+  <?php if (!empty($recommended)): ?>
+  <div style="margin-top:4rem">
+    <h2 class="section-title">🤖 Customers Also Viewed</h2>
+    <div class="product-grid">
+      <?php foreach ($recommended as $rp):
+        $rimgs = json_decode($rp['images'] ?? '[]', true);
+        $rimg  = $rimgs[0] ?? '';
+      ?>
+      <a href="<?= BASE_URL ?>/product.php?handle=<?= h($rp['handle']) ?>" class="product-card">
+        <div class="product-card-img">
+          <img src="<?= h($rimg) ?>" alt="<?= h($rp['name']) ?>" loading="lazy" />
+        </div>
+        <div class="product-card-body">
+          <span class="product-type"><?= h($rp['product_type'] ?? '') ?></span>
+          <h3 class="product-name"><?= h($rp['name']) ?></h3>
+          <p class="product-desc"><?= h($rp['description'] ?? '') ?></p>
+          <div class="product-footer">
+            <span class="product-price"><?= formatPrice($rp['price']) ?></span>
+            <button class="add-btn" onclick="event.preventDefault();addToCart(<?= $rp['id'] ?>)" aria-label="Add to cart">+</button>
+          </div>
+        </div>
+      </a>
+      <?php endforeach; ?>
+    </div>
+  </div>
+  <?php endif; ?>
+
+  <!-- ── Reviews ── -->
   <div class="reviews-section" id="reviews">
     <div class="reviews-header">
       <h2>Reviews</h2>
@@ -150,33 +200,6 @@ startPage($p['name']);
       <?php endforeach; ?>
     </div>
   </div>
-
-  <?php if (!empty($related)): ?>
-  <div style="margin-top:4rem">
-    <h2 class="section-title">Related Products</h2>
-    <div class="product-grid">
-      <?php foreach ($related as $rp):
-        $rimgs = json_decode($rp['images'] ?? '[]', true);
-        $rimg  = $rimgs[0] ?? '';
-      ?>
-      <a href="<?= BASE_URL ?>/product.php?handle=<?= h($rp['handle']) ?>" class="product-card">
-        <div class="product-card-img">
-          <img src="<?= h($rimg) ?>" alt="<?= h($rp['name']) ?>" loading="lazy" />
-        </div>
-        <div class="product-card-body">
-          <span class="product-type"><?= h($rp['product_type'] ?? '') ?></span>
-          <h3 class="product-name"><?= h($rp['name']) ?></h3>
-          <p class="product-desc"><?= h($rp['description'] ?? '') ?></p>
-          <div class="product-footer">
-            <span class="product-price"><?= formatPrice($rp['price']) ?></span>
-            <button class="add-btn" onclick="event.preventDefault();addToCart(<?= $rp['id'] ?>)" aria-label="Add to cart">+</button>
-          </div>
-        </div>
-      </a>
-      <?php endforeach; ?>
-    </div>
-  </div>
-  <?php endif; ?>
 </div>
 
 <script>
@@ -191,6 +214,21 @@ function handleAddToCart(e, id) {
   addToCart(id, qty);
   btn.textContent = '✓ Added!';
   setTimeout(() => { btn.innerHTML = '🛒 Add to Cart'; }, 2000);
+}
+function toggleWishlist(id) {
+  fetch('<?= BASE_URL ?>/ajax/wishlist_toggle.php', {
+    method: 'POST',
+    headers: {'Content-Type':'application/x-www-form-urlencoded'},
+    body: 'product_id=' + id
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.ok) {
+      const btn = document.getElementById('wish-btn');
+      btn.textContent = data.wishlisted ? '❤️' : '🤍';
+      showToast(data.wishlisted ? 'Added to wishlist!' : 'Removed from wishlist');
+    }
+  });
 }
 </script>
 

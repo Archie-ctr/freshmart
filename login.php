@@ -8,20 +8,22 @@ if (getCurrentUser()) {
 
 $error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $email    = trim($_POST['email']    ?? '');
-    $password = $_POST['password'] ?? '';
-
-    $pdo  = getDB();
-    $stmt = $pdo->prepare("SELECT * FROM profiles WHERE email = ?");
-    $stmt->execute([$email]);
-    $row  = $stmt->fetch();
-
-    if ($row && password_verify($password, $row['password'])) {
-        $_SESSION['user_id'] = $row['id'];
-        header('Location: ' . BASE_URL . '/');
-        exit;
+    if (!checkRateLimit('login', 5, 60)) {
+        $error = 'Too many login attempts. Please wait 1 minute.';
     } else {
-        $error = 'Invalid email or password.';
+        $email    = trim($_POST['email']    ?? '');
+        $password = $_POST['password'] ?? '';
+        $pdo  = getDB();
+        $stmt = $pdo->prepare("SELECT * FROM profiles WHERE email = ?");
+        $stmt->execute([$email]);
+        $row  = $stmt->fetch();
+        if ($row && password_verify($password, $row['password'])) {
+            $_SESSION['user_id'] = $row['id'];
+            header('Location: ' . BASE_URL . '/');
+            exit;
+        } else {
+            $error = 'Invalid email or password.';
+        }
     }
 }
 
