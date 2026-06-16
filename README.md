@@ -425,4 +425,12 @@ The result is a live, publicly accessible grocery store that a real business in 
 
 ---
 
+
+**References:**
+- PHP Official Documentation: https://www.php.net/docs.php
+- MySQL Documentation: https://dev.mysql.com/doc/
+- GitHub Actions Documentation: https://docs.github.com/en/actions
+- InfinityFree Documentation: https://infinityfree.com/support
+
+
 *Report prepared by: Archie K Gonwoe Jr — Registration No. 23686/2024*
