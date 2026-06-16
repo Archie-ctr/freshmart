@@ -30,14 +30,15 @@ function requireAdmin(): void {
 }
 
 // ── Price helpers ─────────────────────────────────────────────
+define('USD_TO_RWF', 1400);
 
 /**
  * Returns an HTML snippet showing the price in both USD and RWF.
- * Wrap in a <span class="dual-price"> automatically.
  */
 function formatPrice(int $cents): string {
-    $usd = '$' . number_format($cents / 100, 2);
-    $rwf = 'RWF ' . number_format(round(($cents / 100) * USD_TO_RWF));
+    $rate = (int)(getSetting('usd_to_rwf_rate', '1400') ?: 1400);
+    $usd  = '$' . number_format($cents / 100, 2);
+    $rwf  = 'RWF ' . number_format(round(($cents / 100) * $rate));
     return '<span class="dual-price">'
          . '<span class="price-usd">' . $usd . '</span>'
          . '<span class="price-rwf">' . $rwf . '</span>'
@@ -152,10 +153,6 @@ function saveSetting(string $key, string $value): void {
     )->execute([$key, $value]);
 }
 
-// USD_TO_RWF defined here (after getSetting is available)
-if (!defined('USD_TO_RWF')) {
-    define('USD_TO_RWF', (int)(getSetting('usd_to_rwf_rate', '1400') ?: 1400));
-}
 function calculateTax(string $state, int $subtotalCents): int {
     $rates = [
         'CA' => 0.0725, 'NY' => 0.08, 'TX' => 0.0625, 'FL' => 0.06,

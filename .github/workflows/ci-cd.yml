@@ -8,104 +8,90 @@ on:
 
 jobs:
   # ─────────────────────────────────────────────
-  # JOB 1 — Lint & syntax-check all PHP files
+  # JOB 1 — PHP Syntax Lint
   # ─────────────────────────────────────────────
   lint:
     name: PHP Lint
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup PHP
+      - name: Setup PHP 8.2
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
 
-      - name: Check PHP syntax (all .php files)
+      - name: Syntax check all PHP files
         run: |
-          find . -name "*.php" \
-            ! -path "./vendor/*" \
-            -print0 | xargs -0 -I{} php -l {}
+          find . -name "*.php" ! -path "./vendor/*" -print0 \
+            | xargs -0 -I{} php -l {}
           echo "✅ All PHP files passed syntax check"
 
   # ─────────────────────────────────────────────
-  # JOB 2 — Build & smoke-test Docker image
+  # JOB 2 — Docker Build & Smoke Test
   # ─────────────────────────────────────────────
   docker-build:
     name: Docker Build & Smoke Test
     runs-on: ubuntu-latest
     needs: lint
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+      - uses: actions/checkout@v4
 
       - name: Build Docker image
-        run: |
-          docker build -t freshmart:${{ github.sha }} .
-          echo "✅ Docker image built successfully"
+        run: docker build -t freshmart:ci .
 
-      - name: Start services with docker compose
-        run: |
-          docker compose up -d
-          echo "⏳ Waiting for MySQL and app to be ready..."
+      - name: Start services
+        run: docker compose up -d
 
-      - name: Wait for MySQL to be healthy
+      - name: Wait for MySQL (up to 90s)
         run: |
-          for i in $(seq 1 30); do
-            if docker compose exec -T db mysqladmin ping -h localhost -u freshmart -pfreshmart_pass --silent 2>/dev/null; then
-              echo "✅ MySQL is ready (attempt $i)"
+          echo "Waiting for MySQL..."
+          for i in $(seq 1 18); do
+            if docker exec freshmart_db mysqladmin ping -u freshmart -pfreshmart_pass --silent 2>/dev/null; then
+              echo "✅ MySQL ready after ~$((i*5))s"
               break
             fi
-            echo "  attempt $i/30 — waiting 5s..."
+            echo "  [$i/18] not ready, waiting 5s..."
             sleep 5
           done
 
-      - name: Wait for app to respond
+      - name: Wait for app (up to 60s)
         run: |
-          for i in $(seq 1 20); do
-            STATUS=$(curl -o /dev/null -s -w "%{http_code}" http://localhost:8080/ || echo "000")
-            if [ "$STATUS" = "200" ] || [ "$STATUS" = "302" ]; then
-              echo "✅ App is responding (HTTP $STATUS)"
+          echo "Waiting for app..."
+          for i in $(seq 1 12); do
+            CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/ || echo "000")
+            if [ "$CODE" = "200" ] || [ "$CODE" = "302" ]; then
+              echo "✅ App ready (HTTP $CODE)"
               break
             fi
-            echo "  attempt $i/20 — HTTP $STATUS, waiting 5s..."
+            echo "  [$i/12] HTTP $CODE — retrying in 5s"
             sleep 5
           done
 
-      - name: Smoke test — check key pages
+      - name: Smoke test key pages
         run: |
-          PASS=true
+          FAILED=0
           for PAGE in "/" "/shop.php" "/login.php" "/register.php" "/cart.php"; do
-            STATUS=$(curl -o /dev/null -s -w "%{http_code}" http://localhost:8080$PAGE || echo "000")
-            echo "  $PAGE → HTTP $STATUS"
-            if [ "$STATUS" != "200" ] && [ "$STATUS" != "302" ]; then
-              echo "❌ $PAGE returned $STATUS"
-              PASS=false
+            CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8080${PAGE} || echo "000")
+            echo "  ${PAGE} → ${CODE}"
+            if [ "$CODE" != "200" ] && [ "$CODE" != "302" ]; then
+              FAILED=1
             fi
           done
-          if [ "$PASS" = "false" ]; then
-            docker compose logs app
+          if [ "$FAILED" = "1" ]; then
+            echo "--- App logs ---"
+            docker compose logs app --tail=80
             exit 1
           fi
-          echo "✅ All key pages are accessible"
-
-      - name: Show container logs on failure
-        if: failure()
-        run: docker compose logs
+          echo "✅ All pages OK"
 
       - name: Tear down
         if: always()
         run: docker compose down -v
 
   # ─────────────────────────────────────────────
-  # JOB 3 — Push to Docker Hub & deploy
-  #         Skipped gracefully if secrets not set
+  # JOB 3 — Push to Docker Hub & Deploy
+  # Skipped unless DOCKERHUB_USERNAME secret set
   # ─────────────────────────────────────────────
   deploy:
     name: Push & Deploy
@@ -114,34 +100,20 @@ jobs:
     if: >
       github.event_name == 'push' &&
       (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Check required secrets
-        id: check_secrets
-        run: |
-          if [ -z "${{ secrets.DOCKERHUB_USERNAME }}" ] || [ -z "${{ secrets.DOCKERHUB_TOKEN }}" ]; then
-            echo "skip=true" >> $GITHUB_OUTPUT
-            echo "⚠️ DOCKERHUB_USERNAME or DOCKERHUB_TOKEN not set — skipping push & deploy"
-          else
-            echo "skip=false" >> $GITHUB_OUTPUT
-          fi
+      - uses: docker/setup-buildx-action@v3
 
-      - name: Set up Docker Buildx
-        if: steps.check_secrets.outputs.skip == 'false'
-        uses: docker/setup-buildx-action@v3
-
-      - name: Log in to Docker Hub
-        if: steps.check_secrets.outputs.skip == 'false'
+      - name: Login to Docker Hub
+        if: ${{ secrets.DOCKERHUB_USERNAME != '' }}
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push image to Docker Hub
-        if: steps.check_secrets.outputs.skip == 'false'
+      - name: Build & push to Docker Hub
+        if: ${{ secrets.DOCKERHUB_USERNAME != '' }}
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -149,14 +121,11 @@ jobs:
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/freshmart:latest
             ${{ secrets.DOCKERHUB_USERNAME }}/freshmart:${{ github.sha }}
-          labels: |
-            org.opencontainers.image.source=https://github.com/Archie-ctr/freshmart
-            org.opencontainers.image.url=https://freshmartstore.gt.tc/
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Deploy to server via SSH
-        if: steps.check_secrets.outputs.skip == 'false' && secrets.DEPLOY_HOST != ''
+      - name: SSH Deploy
+        if: ${{ secrets.DEPLOY_HOST != '' }}
         uses: appleboy/ssh-action@v1.0.3
         with:
           host:     ${{ secrets.DEPLOY_HOST }}
@@ -167,11 +136,8 @@ jobs:
             docker compose pull
             docker compose up -d --remove-orphans
             docker image prune -f
-            echo "✅ Deployed freshmart:${{ github.sha }}"
+            echo "✅ Deployed ${{ github.sha }}"
 
-      - name: Summary
-        if: steps.check_secrets.outputs.skip == 'true'
-        run: |
-          echo "## ⚠️ Deploy skipped" >> $GITHUB_STEP_SUMMARY
-          echo "Docker Hub secrets not configured. Jobs 1 (lint) and 2 (build+test) passed." >> $GITHUB_STEP_SUMMARY
-          echo "To enable deploy, add DOCKERHUB_USERNAME and DOCKERHUB_TOKEN in repo Settings → Secrets." >> $GITHUB_STEP_SUMMARY
+      - name: Deploy skipped notice
+        if: ${{ secrets.DOCKERHUB_USERNAME == '' }}
+        run: echo "⚠️ Deploy skipped — add DOCKERHUB_USERNAME and DOCKERHUB_TOKEN secrets to enable."
