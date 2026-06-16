@@ -9,7 +9,7 @@ FreshMart lets customers browse fresh groceries, manage a cart, and pay via **MT
 
 > **URL:** https://freshmartstore.gt.tc/
 
-> **GitHub:** https://github.com/Archie-ctr
+> **GitHub:** https://github.com/Archie-ctr/freshmart
 
 ---
 
@@ -164,7 +164,7 @@ store-php/
 ├── cart.php                       # Shopping cart
 ├── checkout.php                   # Checkout + payment
 ├── collection.php                 # Category page
-├── config.example.php             # Config template (copy → config.php)
+├── config.example.php             # Config template (copy to config.php)
 ├── db.php                         # PDO connection
 ├── docker-compose.yml             # Multi-service Docker setup
 ├── Dockerfile                     # PHP 8.2 + Apache image
