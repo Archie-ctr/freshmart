@@ -74,6 +74,5 @@ jobs:
             Dockerfile
             docker-compose.yml
             .dockerignore
-            getMessage()
             config.php
             README.md
