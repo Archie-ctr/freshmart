@@ -8,6 +8,11 @@ if (!$order) {
 }
 unset($_SESSION['last_order']);
 
+// Update AI purchase-affinity matrix
+if (!empty($order['id'])) {
+    updateProductAffinity($order['id']);
+}
+
 startPage('Order Confirmed');
 ?>
 
@@ -46,6 +51,16 @@ startPage('Order Confirmed');
     <a href="<?= BASE_URL ?>/shop.php" class="btn btn-green">Continue Shopping</a>
     <a href="<?= BASE_URL ?>/orders.php" class="btn btn-outline">My Orders</a>
   </div>
+
+  <?php if (!empty($order['points_earned'])): ?>
+  <div class="loyalty-banner">
+    <span class="loyalty-star">⭐</span>
+    <div>
+      <strong>+<?= $order['points_earned'] ?> points earned!</strong>
+      <span>You now have <strong><?= $order['points_total'] ?></strong> loyalty points.</span>
+    </div>
+  </div>
+  <?php endif; ?>
 </div>
 
 <?php endPage(); ?>

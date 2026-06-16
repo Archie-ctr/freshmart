@@ -51,8 +51,14 @@ function startPage(string $title = 'FreshMart'): void {
             <a href="<?= BASE_URL ?>/register.php">Create Account</a>
           <?php else: ?>
             <div class="dropdown-email"><?= h($user['email']) ?></div>
+            <?php $pts = getLoyaltyPoints($user['id']); if ($pts > 0): ?>
+            <div class="dropdown-points">⭐ <?= $pts ?> points</div>
+            <?php endif; ?>
             <a href="<?= BASE_URL ?>/orders.php">My Orders</a>
             <a href="<?= BASE_URL ?>/wishlist.php">❤️ Wishlist</a>
+            <a href="<?= BASE_URL ?>/referral.php">🎁 Refer & Earn</a>
+            <a href="<?= BASE_URL ?>/subscriptions.php">📦 Subscriptions</a>
+            <a href="<?= BASE_URL ?>/vendor.php">🏪 Vendor Shop</a>
             <?php if ($user['role'] === 'admin'): ?>
               <a href="<?= BASE_URL ?>/admin.php">⚙ Admin</a>
             <?php endif; ?>
@@ -72,6 +78,8 @@ function startPage(string $title = 'FreshMart'): void {
     <?php foreach ($cols as $c): ?>
       <a href="<?= BASE_URL ?>/collection.php?handle=<?= h($c['handle']) ?>"><?= h($c['title']) ?></a>
     <?php endforeach; ?>
+    <a href="<?= BASE_URL ?>/flash-deals.php" style="color:#ef4444;font-weight:600">⚡ Flash Deals</a>
+    <a href="<?= BASE_URL ?>/subscriptions.php">📦 Subscriptions</a>
   </nav>
 
   <div class="mobile-nav" id="mobile-nav" style="display:none">

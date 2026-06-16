@@ -35,6 +35,10 @@ if ($user) {
 // AI-powered recommendations
 $recommended = getRecommendations($p['id'], $p['product_type']);
 
+// Flash deal
+$deal      = getActiveFlashDeal($p['id']);
+$salePrice = $deal ? applyFlashDeal($p['price'], $deal) : $p['price'];
+
 $stmt = $pdo->prepare("SELECT * FROM product_reviews WHERE product_id=? ORDER BY created_at DESC");
 $stmt->execute([$p['id']]);
 $reviews = $stmt->fetchAll();
@@ -83,7 +87,14 @@ startPage($p['name']);
     <div>
       <div class="product-detail-type"><?= h($p['product_type'] ?? '') ?></div>
       <h1 class="product-detail-name"><?= h($p['name']) ?></h1>
-      <div class="product-detail-price"><?= formatPrice($p['price']) ?></div>
+      <div class="product-detail-price">
+        <?= formatPrice($salePrice) ?>
+        <?php if ($deal): ?>
+          <span style="text-decoration:line-through;font-size:.9rem;color:var(--gray-400);margin-left:.4rem"><?= formatPrice($p['price']) ?></span>
+          <span style="background:#ef4444;color:#fff;font-size:.72rem;padding:.15rem .45rem;border-radius:.3rem;margin-left:.4rem">⚡ <?= $deal['discount_pct'] ?>% OFF</span>
+          <div style="font-size:.78rem;color:#ef4444;margin-top:.25rem">Flash deal ends <?= date('M j, g:ia', strtotime($deal['ends_at'])) ?></div>
+        <?php endif ?>
+      </div>
       <div class="stock-badge <?= $inStock ? 'in' : 'out' ?>"><?= $inStock ? 'In Stock' : 'Out of Stock' ?></div>
       <p class="product-detail-desc"><?= h($p['description'] ?? '') ?></p>
 

@@ -27,15 +27,23 @@ if ($status === 'successful') {
             $pdo->prepare("UPDATE ecom_orders SET status='paid' WHERE id=?")
                 ->execute([$pending['id']]);
 
+            // Award loyalty points if user is logged in
+            $pointsEarned = 0;
+            if (!empty($_SESSION['user_id'])) {
+                $pointsEarned = awardLoyaltyPoints((int)$_SESSION['user_id'], $pending['id'], $pending['total']);
+            }
+
             // Move to confirmed session and clear cart
             $_SESSION['last_order'] = [
-                'id'      => $pending['id'],
-                'addr'    => $pending['addr'],
-                'total'   => $pending['total'],
-                'subtotal'=> $pending['total'],
-                'tax'     => 0,
-                'items'   => $pending['items'],
-                'rwf'     => $pending['amount'],
+                'id'           => $pending['id'],
+                'addr'         => $pending['addr'],
+                'total'        => $pending['total'],
+                'subtotal'     => $pending['total'],
+                'tax'          => 0,
+                'items'        => $pending['items'],
+                'rwf'          => $pending['amount'],
+                'points_earned'=> $pointsEarned,
+                'points_total' => !empty($_SESSION['user_id']) ? getLoyaltyPoints((int)$_SESSION['user_id']) : 0,
             ];
             unset($_SESSION['pending_order']);
             clearCart();

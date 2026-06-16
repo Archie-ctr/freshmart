@@ -29,10 +29,19 @@ try {
          ORDER BY title"
     )->fetchAll();
 
+    // Active Flash Deals
+    $flashDeals = $pdo->query(
+        "SELECT fd.*, p.name, p.handle, p.price, p.images, p.product_type, fd.discount_pct
+         FROM flash_deals fd JOIN ecom_products p ON p.id=fd.product_id
+         WHERE fd.starts_at<=NOW() AND fd.ends_at>=NOW() AND p.status='active'
+         ORDER BY fd.ends_at ASC LIMIT 4"
+    )->fetchAll();
+
 } catch (Exception $e) {
     // Prevent 500 error in Docker startup phase
-    $featured = [];
+    $featured   = [];
     $collections = [];
+    $flashDeals  = [];
 }
 
 // Category emoji map
@@ -119,6 +128,41 @@ $catIcons = [
     <?php endforeach; ?>
   </div>
 </div>
+
+<!-- ================= FLASH DEALS (if any) ================= -->
+<?php if (!empty($flashDeals)): ?>
+<div class="section" style="padding-top:0">
+  <div class="section-header">
+    <h2 class="section-title" style="margin:0;color:#ef4444">⚡ Flash Deals</h2>
+    <a href="<?= BASE_URL ?>/flash-deals.php" style="color:#ef4444">View all →</a>
+  </div>
+  <div class="product-grid">
+    <?php foreach ($flashDeals as $d):
+      $dimgs     = json_decode($d['images'] ?? '[]', true);
+      $dimg      = $dimgs[0] ?? '';
+      $salePrice = applyFlashDeal($d['price'], $d);
+    ?>
+    <a href="<?= BASE_URL ?>/product.php?handle=<?= h($d['handle']) ?>" class="product-card">
+      <div class="product-card-img">
+        <img src="<?= h($dimg) ?>" alt="<?= h($d['name']) ?>" loading="lazy" />
+        <span class="product-badge" style="background:#ef4444">⚡ <?= $d['discount_pct'] ?>% OFF</span>
+      </div>
+      <div class="product-card-body">
+        <span class="product-type"><?= h($d['product_type'] ?? '') ?></span>
+        <h3 class="product-name"><?= h($d['name']) ?></h3>
+        <div class="product-footer">
+          <span>
+            <span class="product-price"><?= formatPrice($salePrice) ?></span>
+            <span style="text-decoration:line-through;font-size:.78rem;color:var(--gray-400);margin-left:.3rem"><?= formatPrice($d['price']) ?></span>
+          </span>
+          <button class="add-btn" onclick="event.preventDefault();addToCart(<?= (int)$d['id'] ?>)" aria-label="Add to cart">+</button>
+        </div>
+      </div>
+    </a>
+    <?php endforeach; ?>
+  </div>
+</div>
+<?php endif; ?>
 
 <!-- ================= FEATURED PRODUCTS ================= -->
 <div class="section" style="padding-top:0">

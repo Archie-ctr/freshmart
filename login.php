@@ -8,6 +8,7 @@ if (getCurrentUser()) {
 
 $error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    csrfVerify();
     if (!checkRateLimit('login', 5, 60)) {
         $error = 'Too many login attempts. Please wait 1 minute.';
     } else {
@@ -46,6 +47,7 @@ startPage('Sign In');
     <?php endif; ?>
 
     <form method="post" action="<?= BASE_URL ?>/login.php" class="form-group">
+      <input type="hidden" name="_csrf" value="<?= h(csrfToken()) ?>" />
       <input type="email"    name="email"    required placeholder="Email"
              value="<?= h($_POST['email'] ?? '') ?>" autocomplete="email" />
       <input type="password" name="password" required placeholder="Password" autocomplete="current-password" />

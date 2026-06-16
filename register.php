@@ -6,8 +6,10 @@ if (getCurrentUser()) {
     exit;
 }
 
-$error = '';
+$error  = '';
+$refCode = trim($_GET['ref'] ?? $_POST['ref'] ?? '');
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    csrfVerify();
     $name     = trim($_POST['name']     ?? '');
     $email    = trim($_POST['email']    ?? '');
     $password = $_POST['password'] ?? '';
@@ -27,7 +29,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $pdo->prepare(
                 "INSERT INTO profiles (email, full_name, password, role) VALUES (?, ?, ?, ?)"
             )->execute([$email, $name, $hash, $role]);
-            $_SESSION['user_id'] = (int)$pdo->lastInsertId();
+            $newId = (int)$pdo->lastInsertId();
+            $_SESSION['user_id'] = $newId;
+            securityLog('register', $newId, $email);
+            // Apply referral if code is valid
+            if ($refCode) {
+                $allUsers = $pdo->query('SELECT id FROM profiles')->fetchAll(PDO::FETCH_COLUMN);
+                foreach ($allUsers as $uid) {
+                    if (getReferralCode((int)$uid) === $refCode) {
+                        applyReferral((int)$uid, $newId);
+                        break;
+                    }
+                }
+            }
             header('Location: ' . BASE_URL . '/');
             exit;
         }
@@ -50,6 +64,8 @@ startPage('Create Account');
     <?php endif; ?>
 
     <form method="post" action="<?= BASE_URL ?>/register.php" class="form-group">
+      <input type="hidden" name="_csrf" value="<?= h(csrfToken()) ?>" />
+      <input type="hidden" name="ref"   value="<?= h($refCode) ?>" />
       <input type="text"     name="name"     required placeholder="Full Name"
              value="<?= h($_POST['name'] ?? '') ?>" autocomplete="name" />
       <input type="email"    name="email"    required placeholder="Email"

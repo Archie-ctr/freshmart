@@ -15,6 +15,37 @@ $tab = $_GET['tab'] ?? 'dashboard';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
 
+    if ($action === 'approve_vendor') {
+        $vid = (int)$_POST['vendor_id'];
+        $pdo->prepare("UPDATE vendors SET status='approved' WHERE id=?")->execute([$vid]);
+        header('Location: ' . BASE_URL . '/admin.php?tab=vendors'); exit;
+    }
+    if ($action === 'suspend_vendor') {
+        $vid = (int)$_POST['vendor_id'];
+        $pdo->prepare("UPDATE vendors SET status='suspended' WHERE id=?")->execute([$vid]);
+        header('Location: ' . BASE_URL . '/admin.php?tab=vendors'); exit;
+    }
+    if ($action === 'resolve_payout') {
+        $pid    = (int)$_POST['payout_id'];
+        $status = in_array($_POST['status'] ?? '', ['paid','rejected']) ? $_POST['status'] : 'paid';
+        $pdo->prepare("UPDATE vendor_payouts SET status=?, resolved_at=NOW() WHERE id=?")->execute([$status, $pid]);
+        header('Location: ' . BASE_URL . '/admin.php?tab=vendors'); exit;
+    }
+    if ($action === 'save_flash_deal') {
+        $pid  = (int)$_POST['product_id'];
+        $disc = min(90, max(1, (int)$_POST['discount_pct']));
+        $from = $_POST['starts_at'] ?? date('Y-m-d H:i:s');
+        $to   = $_POST['ends_at']   ?? date('Y-m-d H:i:s', strtotime('+24 hours'));
+        $pdo->prepare("INSERT INTO flash_deals (product_id,discount_pct,starts_at,ends_at) VALUES (?,?,?,?)
+                       ON DUPLICATE KEY UPDATE discount_pct=VALUES(discount_pct),starts_at=VALUES(starts_at),ends_at=VALUES(ends_at)")
+            ->execute([$pid, $disc, $from, $to]);
+        header('Location: ' . BASE_URL . '/admin.php?tab=flash'); exit;
+    }
+    if ($action === 'delete_flash_deal') {
+        $pdo->prepare("DELETE FROM flash_deals WHERE id=?")->execute([(int)$_POST['deal_id']]);
+        header('Location: ' . BASE_URL . '/admin.php?tab=flash'); exit;
+    }
+
     if ($action === 'save_product') {
         $id         = (int)($_POST['id'] ?? 0);
         $name       = trim($_POST['name'] ?? '');
@@ -155,50 +186,6 @@ $monthOrders = (int)$pdo->query(
 // ── Analytics data ───────────────────────────────────────────
 $analytics = [];
 if ($tab === 'analytics') {
-    // Daily orders last 30 days
-    $analytics['daily_orders'] = $pdo->query(
-        "SELECT DATE(created_at) AS day, COUNT(*) AS orders, SUM(total) AS revenue
-         FROM ecom_orders WHERE created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
-         AND status != 'cancelled' GROUP BY DATE(created_at) ORDER BY day ASC"
-    )->fetchAll();
-    // Top products by revenue
-    $analytics['top_products'] = $pdo->query(
-        "SELECT p.name, SUM(oi.total) AS revenue, SUM(oi.quantity) AS units_sold
-         FROM ecom_order_items oi JOIN ecom_products p ON p.id=oi.product_id
-         GROUP BY oi.product_id ORDER BY revenue DESC LIMIT 5"
-    )->fetchAll();
-    // Most viewed products
-    $analytics['top_viewed'] = $pdo->query(
-        "SELECT p.name, COUNT(*) AS views
-         FROM page_views pv JOIN ecom_products p ON p.id=pv.product_id
-         WHERE pv.product_id IS NOT NULL
-         GROUP BY pv.product_id ORDER BY views DESC LIMIT 5"
-    )->fetchAll();
-    // Orders by status
-    $analytics['by_status'] = $pdo->query(
-        "SELECT status, COUNT(*) AS cnt FROM ecom_orders GROUP BY status"
-    )->fetchAll();
-    // Revenue by category
-    $analytics['by_category'] = $pdo->query(
-        "SELECT p.product_type, SUM(oi.total) AS revenue
-         FROM ecom_order_items oi JOIN ecom_products p ON p.id=oi.product_id
-         GROUP BY p.product_type ORDER BY revenue DESC"
-    )->fetchAll();
-    // Total page views today
-    $analytics['views_today'] = (int)$pdo->query(
-        "SELECT COUNT(*) FROM page_views WHERE DATE(created_at)=CURDATE()"
-    )->fetchColumn();
-    // Wishlisted products
-    $analytics['top_wishlisted'] = $pdo->query(
-        "SELECT p.name, COUNT(*) AS cnt FROM wishlists w
-         JOIN ecom_products p ON p.id=w.product_id
-         GROUP BY w.product_id ORDER BY cnt DESC LIMIT 5"
-    )->fetchAll();
-}
-
-// ── Analytics data ───────────────────────────────────────────
-$analytics = [];
-if ($tab === 'analytics') {
     $analytics['daily_orders'] = $pdo->query(
         "SELECT DATE(created_at) AS day, COUNT(*) AS orders, SUM(total) AS revenue
          FROM ecom_orders WHERE created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
@@ -231,6 +218,14 @@ if ($tab === 'analytics') {
          JOIN ecom_products p ON p.id=w.product_id
          GROUP BY w.product_id ORDER BY cnt DESC LIMIT 5"
     )->fetchAll();
+    // Enhanced: AOV, new customers this month, today's conversion rate
+    $analytics['avg_order_value']      = (int)round($revenue / max(1, count($orders)));
+    $analytics['new_customers_month']  = (int)$pdo->query(
+        "SELECT COUNT(*) FROM profiles WHERE role='customer'
+         AND MONTH(created_at)=MONTH(NOW()) AND YEAR(created_at)=YEAR(NOW())"
+    )->fetchColumn();
+    $ordersToday = (int)$pdo->query("SELECT COUNT(*) FROM ecom_orders WHERE DATE(created_at)=CURDATE()")->fetchColumn();
+    $analytics['conversion_rate'] = round(($ordersToday / max(1, $analytics['views_today'])) * 100, 1);
 }
 
 $statusColors = [
@@ -297,6 +292,17 @@ function statusBadge(string $status, array $map): string {
     </a>
     <a href="<?= BASE_URL ?>/admin.php?tab=analytics" class="adm-nav-item <?= $tab==='analytics'?'active':'' ?>">
       <span class="adm-nav-icon">📊</span> Analytics
+    </a>
+    <a href="<?= BASE_URL ?>/admin.php?tab=vendors" class="adm-nav-item <?= $tab==='vendors'?'active':'' ?>">
+      <span class="adm-nav-icon">🏪</span> Vendors
+      <?php $pendingVendors = (int)$pdo->query("SELECT COUNT(*) FROM vendors WHERE status='pending'")->fetchColumn(); ?>
+      <?php if($pendingVendors): ?><span class="adm-nav-badge"><?= $pendingVendors ?></span><?php endif ?>
+    </a>
+    <a href="<?= BASE_URL ?>/admin.php?tab=flash" class="adm-nav-item <?= $tab==='flash'?'active':'' ?>">
+      <span class="adm-nav-icon">⚡</span> Flash Deals
+    </a>
+    <a href="<?= BASE_URL ?>/admin.php?tab=security" class="adm-nav-item <?= $tab==='security'?'active':'' ?>">
+      <span class="adm-nav-icon">🔐</span> Security Log
     </a>
     <a href="<?= BASE_URL ?>/admin.php?tab=settings" class="adm-nav-item <?= $tab==='settings'?'active':'' ?>">
       <span class="adm-nav-icon">⚙️</span> Settings
@@ -702,6 +708,29 @@ function statusBadge(string $status, array $map): string {
         <div class="adm-kpi-value" style="font-size:1rem"><?= formatPrice((int)array_sum(array_column($analytics['daily_orders'],'revenue'))) ?></div>
       </div>
     </div>
+    <div class="adm-kpi-card">
+      <div class="adm-kpi-icon" style="background:#f0fdf4;color:#16a34a">🛍</div>
+      <div class="adm-kpi-body">
+        <div class="adm-kpi-label">Avg Order Value</div>
+        <div class="adm-kpi-value" style="font-size:1rem"><?= formatPrice($analytics['avg_order_value']) ?></div>
+      </div>
+    </div>
+    <div class="adm-kpi-card">
+      <div class="adm-kpi-icon" style="background:#eff6ff;color:#2563eb">🆕</div>
+      <div class="adm-kpi-body">
+        <div class="adm-kpi-label">New Customers</div>
+        <div class="adm-kpi-value"><?= $analytics['new_customers_month'] ?></div>
+        <div class="adm-kpi-sub">This month</div>
+      </div>
+    </div>
+    <div class="adm-kpi-card">
+      <div class="adm-kpi-icon" style="background:#fdf4ff;color:#9333ea">📈</div>
+      <div class="adm-kpi-body">
+        <div class="adm-kpi-label">Conversion Rate</div>
+        <div class="adm-kpi-value"><?= $analytics['conversion_rate'] ?>%</div>
+        <div class="adm-kpi-sub">Orders ÷ views today</div>
+      </div>
+    </div>
   </div>
 
   <div class="adm-dash-grid">
@@ -838,6 +867,204 @@ function statusBadge(string $status, array $map): string {
   })();
   </script>
   <?php endif; ?>
+
+  <?php if($tab==='vendors'): ?>
+  <!-- ═════════════════════ VENDORS ═════════════════════ -->
+  <?php
+    $vendors = $pdo->query(
+        "SELECT v.*, p.email, p.full_name,
+                (SELECT COUNT(*) FROM ecom_products ep WHERE ep.vendor_id=v.id) AS product_count
+         FROM vendors v JOIN profiles p ON p.id=v.user_id ORDER BY v.created_at DESC"
+    )->fetchAll();
+    $payoutRequests = $pdo->query(
+        "SELECT vp.*, v.shop_name FROM vendor_payouts vp JOIN vendors v ON v.id=vp.vendor_id
+         WHERE vp.status='pending' ORDER BY vp.requested_at DESC"
+    )->fetchAll();
+  ?>
+  <div class="adm-page-header">
+    <div><h1 class="adm-page-title">Vendors</h1><p class="adm-page-sub"><?= count($vendors) ?> vendors</p></div>
+  </div>
+
+  <?php if (!empty($payoutRequests)): ?>
+  <div class="adm-panel" style="margin-bottom:1.5rem">
+    <div class="adm-panel-head"><h2>💳 Pending Payout Requests (<?= count($payoutRequests) ?>)</h2></div>
+    <table class="adm-table">
+      <thead><tr><th>Vendor</th><th>Amount</th><th>Requested</th><th>Action</th></tr></thead>
+      <tbody>
+      <?php foreach ($payoutRequests as $pay): ?>
+      <tr>
+        <td><?= h($pay['shop_name']) ?></td>
+        <td>RWF <?= number_format($pay['amount_rwf']) ?></td>
+        <td style="font-size:.82rem;color:var(--adm-muted)"><?= date('M j, Y', strtotime($pay['requested_at'])) ?></td>
+        <td>
+          <div style="display:flex;gap:.5rem">
+            <form method="post" style="display:inline">
+              <input type="hidden" name="action"    value="resolve_payout">
+              <input type="hidden" name="payout_id" value="<?= $pay['id'] ?>">
+              <input type="hidden" name="status"    value="paid">
+              <button class="adm-save-btn" style="background:#16a34a">Mark Paid</button>
+            </form>
+            <form method="post" style="display:inline">
+              <input type="hidden" name="action"    value="resolve_payout">
+              <input type="hidden" name="payout_id" value="<?= $pay['id'] ?>">
+              <input type="hidden" name="status"    value="rejected">
+              <button class="adm-icon-btn del">Reject</button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      <?php endforeach ?>
+      </tbody>
+    </table>
+  </div>
+  <?php endif ?>
+
+  <div class="adm-panel">
+    <?php if (empty($vendors)): ?>
+      <div class="adm-empty"><span>🏪</span><p>No vendor applications yet.</p></div>
+    <?php else: ?>
+    <table class="adm-table">
+      <thead><tr><th>Shop</th><th>Owner</th><th>Products</th><th>Commission</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody>
+      <?php foreach ($vendors as $v): ?>
+      <tr>
+        <td><strong><?= h($v['shop_name']) ?></strong></td>
+        <td><?= h($v['full_name']) ?><br><small style="color:var(--adm-muted)"><?= h($v['email']) ?></small></td>
+        <td><?= $v['product_count'] ?></td>
+        <td><?= $v['commission'] ?>%</td>
+        <td><?= statusBadge($v['status']==='approved'?'delivered':($v['status']==='pending'?'pending':'cancelled'),$statusColors) ?></td>
+        <td>
+          <div class="adm-row-actions">
+          <?php if ($v['status'] !== 'approved'): ?>
+            <form method="post" style="display:inline">
+              <input type="hidden" name="action"    value="approve_vendor">
+              <input type="hidden" name="vendor_id" value="<?= $v['id'] ?>">
+              <button class="adm-save-btn">Approve</button>
+            </form>
+          <?php endif ?>
+          <?php if ($v['status'] !== 'suspended'): ?>
+            <form method="post" style="display:inline">
+              <input type="hidden" name="action"    value="suspend_vendor">
+              <input type="hidden" name="vendor_id" value="<?= $v['id'] ?>">
+              <button class="adm-icon-btn del">Suspend</button>
+            </form>
+          <?php endif ?>
+          </div>
+        </td>
+      </tr>
+      <?php endforeach ?>
+      </tbody>
+    </table>
+    <?php endif ?>
+  </div>
+  <?php endif ?>
+
+  <?php if($tab==='flash'): ?>
+  <!-- ═════════════════════ FLASH DEALS ═════════════════════ -->
+  <?php
+    $allDeals = $pdo->query(
+        "SELECT fd.*, p.name AS product_name FROM flash_deals fd
+         JOIN ecom_products p ON p.id=fd.product_id ORDER BY fd.ends_at DESC"
+    )->fetchAll();
+    $allProds = $pdo->query("SELECT id, name FROM ecom_products WHERE status='active' ORDER BY name")->fetchAll();
+  ?>
+  <div class="adm-page-header">
+    <div><h1 class="adm-page-title">⚡ Flash Deals</h1><p class="adm-page-sub"><?= count($allDeals) ?> deals</p></div>
+  </div>
+
+  <!-- Add deal form -->
+  <div class="adm-panel" style="margin-bottom:1.5rem">
+    <div class="adm-panel-head"><h2>Create Flash Deal</h2></div>
+    <form method="post" style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr auto;gap:.75rem;align-items:end">
+      <input type="hidden" name="action" value="save_flash_deal">
+      <div>
+        <label style="font-size:.82rem;display:block;margin-bottom:.25rem">Product</label>
+        <select name="product_id" class="adm-select" style="width:100%">
+          <?php foreach ($allProds as $ap): ?>
+            <option value="<?= $ap['id'] ?>"><?= h($ap['name']) ?></option>
+          <?php endforeach ?>
+        </select>
+      </div>
+      <div>
+        <label style="font-size:.82rem;display:block;margin-bottom:.25rem">Discount %</label>
+        <input type="number" name="discount_pct" min="1" max="90" value="20" class="adm-select" style="width:100%">
+      </div>
+      <div>
+        <label style="font-size:.82rem;display:block;margin-bottom:.25rem">Starts</label>
+        <input type="datetime-local" name="starts_at" value="<?= date('Y-m-d\TH:i') ?>" class="adm-select" style="width:100%">
+      </div>
+      <div>
+        <label style="font-size:.82rem;display:block;margin-bottom:.25rem">Ends</label>
+        <input type="datetime-local" name="ends_at" value="<?= date('Y-m-d\TH:i', strtotime('+24 hours')) ?>" class="adm-select" style="width:100%">
+      </div>
+      <button type="submit" class="adm-primary-btn">⚡ Create</button>
+    </form>
+  </div>
+
+  <div class="adm-panel">
+    <?php if (empty($allDeals)): ?>
+      <div class="adm-empty"><span>⚡</span><p>No flash deals yet.</p></div>
+    <?php else: ?>
+    <table class="adm-table">
+      <thead><tr><th>Product</th><th>Discount</th><th>Starts</th><th>Ends</th><th>Status</th><th>Del</th></tr></thead>
+      <tbody>
+      <?php foreach ($allDeals as $d):
+        $now   = time();
+        $start = strtotime($d['starts_at']);
+        $end   = strtotime($d['ends_at']);
+        $status = $now < $start ? 'processing' : ($now <= $end ? 'paid' : 'cancelled');
+        $label  = $now < $start ? 'Upcoming' : ($now <= $end ? 'Live' : 'Expired');
+      ?>
+      <tr>
+        <td><strong><?= h($d['product_name']) ?></strong></td>
+        <td style="color:#ef4444;font-weight:700"><?= $d['discount_pct'] ?>% OFF</td>
+        <td style="font-size:.82rem"><?= date('M j g:ia', strtotime($d['starts_at'])) ?></td>
+        <td style="font-size:.82rem"><?= date('M j g:ia', strtotime($d['ends_at'])) ?></td>
+        <td><?= statusBadge($status, $statusColors) ?></td>
+        <td>
+          <form method="post" style="display:inline" onsubmit="return confirm('Delete deal?')">
+            <input type="hidden" name="action"  value="delete_flash_deal">
+            <input type="hidden" name="deal_id" value="<?= $d['id'] ?>">
+            <button class="adm-icon-btn del">🗑️</button>
+          </form>
+        </td>
+      </tr>
+      <?php endforeach ?>
+      </tbody>
+    </table>
+    <?php endif ?>
+  </div>
+  <?php endif ?>
+
+  <?php if($tab==='security'): ?>
+  <!-- ═════════════════════ SECURITY LOG ═════════════════════ -->
+  <?php $secLogs = $pdo->query(
+      "SELECT sl.*, p.email FROM security_log sl LEFT JOIN profiles p ON p.id=sl.user_id
+       ORDER BY sl.created_at DESC LIMIT 100"
+  )->fetchAll(); ?>
+  <div class="adm-page-header">
+    <div><h1 class="adm-page-title">🔐 Security Log</h1><p class="adm-page-sub">Last 100 events</p></div>
+  </div>
+  <div class="adm-panel">
+    <?php if (empty($secLogs)): ?>
+      <div class="adm-empty"><span>🔐</span><p>No security events logged yet.</p></div>
+    <?php else: ?>
+    <table class="adm-table">
+      <thead><tr><th>Time</th><th>Action</th><th>User</th><th>Detail</th></tr></thead>
+      <tbody>
+      <?php foreach ($secLogs as $log): ?>
+      <tr>
+        <td style="font-size:.8rem;color:var(--adm-muted);white-space:nowrap"><?= date('M j H:i', strtotime($log['created_at'])) ?></td>
+        <td><code style="font-size:.8rem;background:var(--adm-bg);padding:.15rem .4rem;border-radius:.3rem"><?= h($log['action']) ?></code></td>
+        <td style="font-size:.85rem"><?= $log['email'] ? h($log['email']) : '<span style="color:var(--adm-muted)">Guest</span>' ?></td>
+        <td style="font-size:.82rem;color:var(--adm-muted)"><?= h($log['detail']) ?></td>
+      </tr>
+      <?php endforeach ?>
+      </tbody>
+    </table>
+    <?php endif ?>
+  </div>
+  <?php endif ?>
 
   <?php if($tab==='settings'):
     $section = $_GET['section'] ?? 'general';

@@ -174,6 +174,139 @@ CREATE TABLE IF NOT EXISTS rate_limit (
     INDEX idx_rl (ip_hash, action, window_start)
 ) ENGINE=InnoDB;
 
+-- ── Loyalty Points ──────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS loyalty_points (
+    id         INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id    INT UNSIGNED NOT NULL,
+    order_id   INT UNSIGNED NULL,
+    points     INT NOT NULL DEFAULT 0 COMMENT 'positive=earn, negative=redeem',
+    note       VARCHAR(255) NOT NULL DEFAULT '',
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_lp_user (user_id),
+    FOREIGN KEY (user_id)  REFERENCES profiles(id)     ON DELETE CASCADE,
+    FOREIGN KEY (order_id) REFERENCES ecom_orders(id)  ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+-- ── CSRF Tokens ───────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS csrf_tokens (
+    id         INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    token      VARCHAR(64) NOT NULL UNIQUE,
+    session_id VARCHAR(128) NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_csrf (token),
+    INDEX idx_csrf_sess (session_id)
+) ENGINE=InnoDB;
+
+-- ── Vendors (Multi-vendor marketplace) ──────────────────────
+CREATE TABLE IF NOT EXISTS vendors (
+    id           INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id      INT UNSIGNED NOT NULL UNIQUE,
+    shop_name    VARCHAR(255) NOT NULL,
+    shop_handle  VARCHAR(255) NOT NULL UNIQUE,
+    description  TEXT,
+    status       ENUM('pending','approved','suspended') NOT NULL DEFAULT 'pending',
+    commission   DECIMAL(5,2) NOT NULL DEFAULT 10.00 COMMENT 'Platform commission %',
+    created_at   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES profiles(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- Add vendor_id to products (NULL = platform product)
+ALTER TABLE ecom_products ADD COLUMN IF NOT EXISTS vendor_id INT UNSIGNED NULL,
+    ADD INDEX IF NOT EXISTS idx_vendor (vendor_id);
+
+-- ── Vendor Payouts ────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS vendor_payouts (
+    id           INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    vendor_id    INT UNSIGNED NOT NULL,
+    amount_rwf   INT NOT NULL DEFAULT 0,
+    status       ENUM('pending','paid','rejected') NOT NULL DEFAULT 'pending',
+    note         VARCHAR(255) DEFAULT '',
+    requested_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    resolved_at  DATETIME NULL,
+    FOREIGN KEY (vendor_id) REFERENCES vendors(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- ── Flash Deals ───────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS flash_deals (
+    id           INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    product_id   INT UNSIGNED NOT NULL,
+    discount_pct TINYINT NOT NULL DEFAULT 10 COMMENT '% off',
+    starts_at    DATETIME NOT NULL,
+    ends_at      DATETIME NOT NULL,
+    created_at   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_fd_active (product_id, starts_at, ends_at),
+    FOREIGN KEY (product_id) REFERENCES ecom_products(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- ── Subscription Boxes ───────────────────────────────────────
+CREATE TABLE IF NOT EXISTS subscription_boxes (
+    id           INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    name         VARCHAR(255) NOT NULL,
+    description  TEXT,
+    price_cents  INT NOT NULL DEFAULT 0,
+    frequency    ENUM('weekly','biweekly','monthly') NOT NULL DEFAULT 'weekly',
+    is_active    TINYINT(1) NOT NULL DEFAULT 1,
+    created_at   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS subscriptions (
+    id           INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id      INT UNSIGNED NOT NULL,
+    box_id       INT UNSIGNED NOT NULL,
+    status       ENUM('active','paused','cancelled') NOT NULL DEFAULT 'active',
+    next_billing DATETIME NOT NULL,
+    created_at   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES profiles(id) ON DELETE CASCADE,
+    FOREIGN KEY (box_id)  REFERENCES subscription_boxes(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- ── Referrals ─────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS referrals (
+    id            INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    referrer_id   INT UNSIGNED NOT NULL,
+    referred_id   INT UNSIGNED NOT NULL UNIQUE,
+    reward_points INT NOT NULL DEFAULT 100,
+    rewarded      TINYINT(1) NOT NULL DEFAULT 0,
+    created_at    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (referrer_id) REFERENCES profiles(id) ON DELETE CASCADE,
+    FOREIGN KEY (referred_id) REFERENCES profiles(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- ── Security Audit Log ────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS security_log (
+    id         INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id    INT UNSIGNED NULL,
+    action     VARCHAR(100) NOT NULL,
+    ip_hash    VARCHAR(64) NOT NULL,
+    detail     VARCHAR(255) DEFAULT '',
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_sl_user (user_id),
+    INDEX idx_sl_action (action),
+    INDEX idx_sl_date (created_at)
+) ENGINE=InnoDB;
+
+-- ── OTP (Two-Factor Auth via email) ──────────────────────────
+CREATE TABLE IF NOT EXISTS otp_tokens (
+    id         INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id    INT UNSIGNED NOT NULL,
+    otp_hash   VARCHAR(255) NOT NULL,
+    purpose    ENUM('2fa','password_reset') NOT NULL DEFAULT '2fa',
+    used       TINYINT(1) NOT NULL DEFAULT 0,
+    expires_at DATETIME NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_otp_user (user_id),
+    FOREIGN KEY (user_id) REFERENCES profiles(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- ── AI: purchase-based scoring table (materialised view) ─────
+CREATE TABLE IF NOT EXISTS product_affinity (
+    product_a   INT UNSIGNED NOT NULL,
+    product_b   INT UNSIGNED NOT NULL,
+    score       INT NOT NULL DEFAULT 1,
+    updated_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (product_a, product_b)
+) ENGINE=InnoDB;
+
 -- ── Shop Settings ───────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS shop_settings (
   id          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -201,4 +334,15 @@ INSERT IGNORE INTO shop_settings (setting_key, setting_val) VALUES
 ('google_analytics',''),
 ('paypack_app_id','e1121f46-68eb-11f1-9d8c-deadd43720af'),
 ('paypack_app_secret','497bed007d31a80fa92151a870598c50da39a3ee5e6b4b0d3255bfef95601890afd80709'),
-('paypack_enabled','1');
+('paypack_enabled','1'),
+('vendor_marketplace','0'),
+('referral_reward_points','100'),
+('flash_deals_enabled','1'),
+('subscriptions_enabled','1'),
+('2fa_enabled','0');
+
+-- ── Seed: Subscription Boxes ─────────────────────────────────
+INSERT IGNORE INTO subscription_boxes (name, description, price_cents, frequency) VALUES
+('Fresh Fruit Box',   'Weekly curated box of 5 seasonal fruits',        1999, 'weekly'),
+('Veggie Boost Box',  'Biweekly assortment of farm-fresh vegetables',    2499, 'biweekly'),
+('Family Essentials', 'Monthly box of dairy, bakery & snack staples',    4999, 'monthly');
