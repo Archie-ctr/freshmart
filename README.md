@@ -13,6 +13,58 @@ FreshMart lets customers browse fresh groceries, manage a cart, and pay via **MT
 
 ---
 
+## 📸 Screenshots
+
+### Homepage
+![Homepage](screenshots/homepage.png)
+
+### Shop / Product Listing
+![Shop Page](screenshots/shop-page.png)
+
+### Product Detail
+![Product Detail](screenshots/Product%20Detail.png)
+
+### Shopping Cart
+![Shopping Cart](screenshots/Shopping%20Cart.png)
+
+### Checkout
+![Checkout Page](screenshots/Checkout%20Page.png)
+
+### Payment Processing
+![Payment Processing](screenshots/Payment%20Processing.png)
+
+### Order Confirmation
+![Order Page](screenshots/Order%20Page.png)
+
+### Login
+![Login Page](screenshots/Login%20Page.png)
+
+### Forgot Password
+![Forgot Password](screenshots/forgot%20password.png)
+
+### Admin Dashboard
+![Admin Dashboard](screenshots/Admin%20Dashboard.png)
+
+### Admin Analytics
+![Admin Analytics](screenshots/Admin%20Analytics.png)
+
+### Admin Products
+![Admin Products](screenshots/Admin%20Products.png)
+
+### Admin Orders
+![Admin Orders](screenshots/Admin%20Orders.png)
+
+### Admin Flash Deals
+![Admin Flash Deals](screenshots/Admin%20Flash%20Deals.png)
+
+### Admin Vendor Management
+![Admin Vendor](screenshots/Admin%20Vendor.png)
+
+### Admin Settings
+![Admin Settings](screenshots/Admin%20Settings.png)
+
+---
+
 ## 📋 Features
 
 | Area | Features |
@@ -22,9 +74,10 @@ FreshMart lets customers browse fresh groceries, manage a cart, and pay via **MT
 | **Cart** | Add/remove items, update quantities, real-time totals (USD + RWF) |
 | **Checkout** | Customer details form, order summary, Mobile Money payment (USSD push) |
 | **Orders** | Order confirmation page, "My Orders" history |
-| **Admin** | Dashboard, product CRUD, collections, order management, settings |
-| **Auth** | Register, login, logout, role-based access (admin/customer) |
+| **Admin** | Dashboard, product CRUD, collections, order management, analytics, vendor, settings |
+| **Auth** | Register, login, logout, OTP 2FA, forgot password, role-based access |
 | **Payment** | Paypack integration — MTN MoMo (078/079) & Airtel Money (072/073/075) |
+| **Advanced** | Loyalty points, referrals, flash deals, subscriptions, wishlist, AI recommendations |
 
 ---
 
@@ -34,9 +87,11 @@ FreshMart lets customers browse fresh groceries, manage a cart, and pay via **MT
 - **Database:** MySQL 8.0
 - **Frontend:** Vanilla HTML/CSS/JS (no framework)
 - **Payment:** Paypack (Rwanda Mobile Money)
+- **Email:** Gmail SMTP via raw PHP socket
 - **Container:** Docker + Docker Compose
 - **CI/CD:** GitHub Actions
 - **Web Server:** Apache (inside Docker)
+- **Hosting:** InfinityFree
 
 ---
 
@@ -64,21 +119,17 @@ open http://localhost:8080/store-php/
 | App | http://localhost:8080/store-php/ |
 | phpMyAdmin | http://localhost:8081 (dev profile only) |
 
-To start with phpMyAdmin:
 ```bash
+# Start with phpMyAdmin
 docker compose --profile dev up -d
-```
 
-### Stop & clean up
-```bash
+# Stop & clean up
 docker compose down -v
 ```
 
 ---
 
 ## ⚙️ CI/CD Pipeline (GitHub Actions)
-
-The pipeline in `.github/workflows/ci-cd.yml` runs automatically on every push to `main`/`master`:
 
 ```
 Push to main
@@ -89,44 +140,24 @@ Push to main
     ├─► Job 2: Docker Build & Smoke Test
     │       ├── docker build
     │       ├── docker compose up
-    │       ├── curl health check (HTTP 200)
-    │       └── Check all key pages respond
+    │       └── curl health check (HTTP 200)
     │
-    └─► Job 3: Push & Deploy  (main branch only)
-            ├── Push image to Docker Hub
-            └── SSH deploy to production server
+    └─► Job 3: Deploy to InfinityFree via FTP
+            └── SamKirkland/FTP-Deploy-Action@v4.3.5
 ```
 
 ### Required GitHub Secrets
 
 | Secret | Description |
 |---|---|
-| `DOCKERHUB_USERNAME` | Your Docker Hub username |
-| `DOCKERHUB_TOKEN` | Docker Hub access token |
-| `DEPLOY_HOST` | Production server IP/hostname (optional) |
-| `DEPLOY_USER` | SSH username on production server (optional) |
-| `DEPLOY_KEY` | SSH private key for deployment (optional) |
-
-> The deploy job is skipped if `DEPLOY_HOST` is not set.
+| `FTP_PASSWORD` | InfinityFree FTP account password |
 
 ---
 
 ## 🗄️ Database
 
-The database schema and seed data are in **`install.sql`**.
+Schema and seed data are in **`install.sql`** (23 tables, 14 products, 6 categories, 3 subscription boxes).
 
-It creates:
-- `profiles` — user accounts
-- `ecom_collections` — product categories
-- `ecom_products` — product catalog
-- `ecom_product_collections` — product ↔ category junction
-- `ecom_customers` — order-level customer records
-- `ecom_orders` — order headers
-- `ecom_order_items` — order line items
-- `product_reviews` — product ratings & reviews
-- `shop_settings` — key-value store settings
-
-### Import manually
 ```bash
 mysql -u root freshmart < install.sql
 ```
@@ -147,51 +178,35 @@ mysql -u root freshmart < install.sql
 store-php/
 ├── .github/workflows/ci-cd.yml   # CI/CD pipeline
 ├── ajax/                          # AJAX endpoint handlers
-│   ├── cart_add.php
-│   ├── cart_remove.php
-│   ├── cart_update.php
-│   ├── paypack_initiate.php
-│   └── paypack_verify.php
 ├── assets/                        # CSS & JS
-│   ├── style.css
-│   ├── admin.css
-│   └── app.js
 ├── docker/                        # Docker config
-│   ├── apache.conf
-│   └── php.ini
+├── screenshots/                   # Application screenshots
 ├── uploads/products/              # Uploaded product images
 ├── admin.php                      # Admin dashboard
 ├── cart.php                       # Shopping cart
 ├── checkout.php                   # Checkout + payment
-├── collection.php                 # Category page
-├── config.example.php             # Config template (copy to config.php)
-├── db.php                         # PDO connection
-├── docker-compose.yml             # Multi-service Docker setup
-├── Dockerfile                     # PHP 8.2 + Apache image
-├── functions.php                  # Helpers (auth, cart, price)
+├── flash-deals.php                # Flash deals page
+├── forgot-password.php            # Password reset
+├── functions.php                  # Helpers (auth, cart, price, CSRF, OTP, loyalty...)
 ├── index.php                      # Homepage
 ├── install.sql                    # Database schema + seed data
 ├── layout.php                     # Shared header/footer
-├── login.php                      # Sign in
-├── logout.php                     # Sign out
+├── login.php / register.php       # Authentication
+├── mailer.php                     # Raw-socket SMTP mailer
 ├── order-confirmation.php         # Post-payment confirmation
 ├── orders.php                     # My orders history
 ├── paypack.php                    # Paypack API integration
 ├── product.php                    # Product detail + reviews
-├── register.php                   # Account creation
-└── shop.php                       # Product listing + search
+├── referral.php                   # Referral program
+├── reset-password.php             # OTP password reset
+├── shop.php                       # Product listing + search
+├── subscriptions.php              # Subscription boxes
+├── vendor.php                     # Vendor marketplace
+└── wishlist.php                   # Wishlist
 ```
-
----
-
-## 📸 Screenshots
-
-> Add screenshots of your running application here.
 
 ---
 
 ## 📄 License
 
 MIT — free to use for educational purposes.
-
-<!-- Last updated: CI/CD pipeline fix -->

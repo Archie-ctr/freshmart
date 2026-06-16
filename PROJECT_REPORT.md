@@ -1,9 +1,9 @@
 # FreshMart — Online Grocery Store
 ## Project Report
 
-**Student Name:** Archie K Gonwoe Jr
-**Registration Number:** 23686/2024
-**Course:** Web Application Development
+**Student Name:** Archie K Gonwoe Jr  
+**Registration Number:** 23686/2024  
+**Course:** Web Application Development  
 **Institution:** [Your Institution Name]
 
 ---
@@ -17,7 +17,7 @@
 | 3 | Project Report | This document |
 | 4 | Source Code | GitHub repository |
 | 5 | Database Script | `install.sql` in repository root |
-| 6 | Screenshots | See Screenshots section |
+| 6 | Screenshots | See Section 7 below |
 
 ---
 
@@ -27,7 +27,7 @@ FreshMart is a fully functional online grocery store web application built from 
 
 The project was built without any PHP framework, demonstrating a strong command of core PHP, SQL, HTML, CSS, and JavaScript. It is containerised with Docker for local development, deployed live on InfinityFree hosting at https://freshmartstore.gt.tc/, and ships with a fully automated CI/CD pipeline via GitHub Actions that lints, builds, and deploys on every push to the main branch.
 
-Beyond the core store functionality, FreshMart includes a comprehensive set of advanced features: a full admin dashboard with analytics, automated email notifications for every key event, a loyalty points system, flash deals, product subscriptions, a referral program, a vendor marketplace framework, AI-powered product recommendations, CSRF protection, rate limiting, OTP-based 2FA, and a security audit log.
+Beyond the core store functionality, FreshMart includes: a full admin dashboard with analytics, automated email notifications for every key event, a loyalty points system, flash deals, product subscriptions, a referral program, a vendor marketplace framework, AI-powered product recommendations, CSRF protection, rate limiting, OTP-based 2FA, and a security audit log.
 
 ---
 
@@ -88,15 +88,15 @@ FreshMart was built to directly solve all of these problems.
 
 ### 4.2 Automated Email Notifications
 
-Every key event in the system triggers an automatic email. All emails are sent from `archiekgonwoe@gmail.com` via Gmail SMTP with STARTTLS encryption, using a custom raw-socket PHP mailer with no external libraries.
+All emails are sent from `archiekgonwoe@gmail.com` via Gmail SMTP with STARTTLS encryption, using a custom raw-socket PHP mailer with no external libraries.
 
 | Trigger | Recipient | Email Content |
 |---------|-----------|---------------|
 | Customer registers | Customer | Welcome email with "Start Shopping" button and referral tip |
 | Payment confirmed | Customer | Order receipt with order number, item list, total (USD + RWF), delivery estimate |
-| Payment confirmed | Admin | New order alert with customer name, email, phone, address, items, total, and "View in Admin" link |
-| Admin changes order status | Customer | Tracking update with new status icon, human-readable message, "View My Orders" link |
-| Admin adds new product | All customers | New arrival announcement with product image, name, description, price, and "Shop Now" link |
+| Payment confirmed | Admin | New order alert with customer name, email, phone, address, items, total |
+| Admin changes order status | Customer | Tracking update with new status icon and "View My Orders" link |
+| Admin adds new product | All customers | New arrival announcement with product image, name, price, and "Shop Now" link |
 | Forgot password requested | Customer | 6-digit reset code valid for 10 minutes |
 | 2FA login (if enabled) | Customer | 6-digit OTP verification code valid for 10 minutes |
 
@@ -109,7 +109,7 @@ Every key event in the system triggers an automatic email. All emails are sent f
 | Collections | Create and manage product categories with visibility toggle |
 | Order Management | View all orders; update status (pending → paid → processing → shipped → delivered → cancelled) |
 | Customer List | View all registered customers with email, phone, and join date |
-| Analytics | 30-day revenue bar chart + orders line chart; top products by revenue; most-viewed products; orders by status; revenue by category; wishlist stats; conversion rate; average order value; new customers this month |
+| Analytics | 30-day revenue bar chart + orders line chart; top products by revenue; most-viewed products; orders by status; revenue by category; conversion rate; average order value |
 | Vendor Management | Approve or suspend vendor applications; manage payout requests |
 | Flash Deals | Create time-limited deals with discount %; live/upcoming/expired status display |
 | Security Log | Last 100 security events: logins, failed attempts, registrations, password resets |
@@ -254,27 +254,57 @@ Gmail delivers to recipient inbox
 
 ## 7. Screenshots
 
-Screenshots of the live application are available at **https://freshmartstore.gt.tc/**
+### 7.1 Customer-Facing Pages
 
-Key pages to screenshot for the submission:
+**Homepage**
+![Homepage](screenshots/homepage.png)
 
-| # | Page | URL |
-|---|------|-----|
-| 1 | Homepage | / |
-| 2 | Shop / Product Listing | /shop.php |
-| 3 | Product Detail + Reviews | /product.php?handle=organic-bananas |
-| 4 | Shopping Cart | /cart.php |
-| 5 | Checkout — Delivery Step | /checkout.php |
-| 6 | Checkout — Payment Step | /checkout.php (step 2) |
-| 7 | Order Confirmation | /order-confirmation.php |
-| 8 | Login (with eye toggle + forgot password link) | /login.php |
-| 9 | Forgot Password | /forgot-password.php |
-| 10 | Admin Dashboard | /admin.php?tab=dashboard |
-| 11 | Admin Analytics | /admin.php?tab=analytics |
-| 12 | Admin Products | /admin.php?tab=products |
-| 13 | Admin Orders | /admin.php?tab=orders |
-| 14 | Admin Flash Deals | /admin.php?tab=flash |
-| 15 | Admin Settings | /admin.php?tab=settings |
+**Shop / Product Listing**
+![Shop Page](screenshots/shop-page.png)
+
+**Product Detail + Reviews**
+![Product Detail](screenshots/Product%20Detail.png)
+
+**Shopping Cart**
+![Shopping Cart](screenshots/Shopping%20Cart.png)
+
+**Checkout — Delivery & Payment Steps**
+![Checkout Page](screenshots/Checkout%20Page.png)
+
+**Payment Processing (USSD Push Polling)**
+![Payment Processing](screenshots/Payment%20Processing.png)
+
+**Order Confirmation**
+![Order Page](screenshots/Order%20Page.png)
+
+**Login Page**
+![Login Page](screenshots/Login%20Page.png)
+
+**Forgot Password**
+![Forgot Password](screenshots/forgot%20password.png)
+
+### 7.2 Admin Panel
+
+**Admin Dashboard**
+![Admin Dashboard](screenshots/Admin%20Dashboard.png)
+
+**Admin Analytics**
+![Admin Analytics](screenshots/Admin%20Analytics.png)
+
+**Admin Products**
+![Admin Products](screenshots/Admin%20Products.png)
+
+**Admin Orders**
+![Admin Orders](screenshots/Admin%20Orders.png)
+
+**Admin Flash Deals**
+![Admin Flash Deals](screenshots/Admin%20Flash%20Deals.png)
+
+**Admin Vendor Management**
+![Admin Vendor](screenshots/Admin%20Vendor.png)
+
+**Admin Settings**
+![Admin Settings](screenshots/Admin%20Settings.png)
 
 ---
 
@@ -289,6 +319,7 @@ The repository contains:
 - `.github/workflows/ci-cd.yml` — automated CI/CD pipeline
 - `config.example.php` — safe configuration template (real `config.php` is gitignored)
 - `README.md` — full setup instructions for Docker and manual deployment
+- `screenshots/` — all application screenshots
 
 ---
 
@@ -365,21 +396,14 @@ PHP frameworks provide CSRF and rate limiting out of the box. Building them from
 
 ## 12. Future Work
 
-1. **SMS order notifications** — Integrate Africa's Talking SMS gateway to send order status updates via text message, complementing the email notifications for customers with limited internet access.
-
-2. **Real-time delivery tracking** — Add a map-based tracking page with live driver location updates using WebSockets or Server-Sent Events, integrated with Google Maps or OpenStreetMap.
-
-3. **Progressive Web App (PWA)** — Add a `manifest.json` and service worker so customers can install FreshMart on their phone's home screen and browse the product catalog offline.
-
-4. **Full vendor marketplace activation** — The vendor data model, application flow, admin approval panel, and payout management are already built. The next step is enabling vendor-specific product pages and automated commission calculation from each sale.
-
-5. **Multi-language support** — Add French and Kinyarwanda translations using a simple PHP key-value translation file, given that Rwanda's official languages include both alongside English.
-
-6. **Enhanced AI recommendations** — The current recommendation engine uses a purchase-affinity matrix and view-based collaborative filtering. This could be upgraded to use AWS Personalize for real-time personalised recommendations at scale.
-
-7. **Mobile application** — Build a React Native or Flutter app consuming a REST API layer on top of the existing PHP backend, providing a native mobile shopping experience.
-
-8. **Inventory management with supplier alerts** — Automatically email suppliers when stock drops below a configurable threshold, and allow bulk inventory updates via CSV import in the admin panel.
+1. **SMS order notifications** — Integrate Africa's Talking SMS gateway to send order status updates via text message.
+2. **Real-time delivery tracking** — Map-based tracking with live driver location using WebSockets or Server-Sent Events.
+3. **Progressive Web App (PWA)** — Add `manifest.json` and service worker so customers can install FreshMart on their phone and browse offline.
+4. **Full vendor marketplace activation** — The vendor data model, application flow, admin approval panel, and payout management are already built. Next step: vendor-specific product pages and automated commission calculation.
+5. **Multi-language support** — Add French and Kinyarwanda translations using a simple PHP key-value translation file.
+6. **Enhanced AI recommendations** — Upgrade from the current purchase-affinity matrix to AWS Personalize for real-time personalised recommendations at scale.
+7. **Mobile application** — React Native or Flutter app consuming a REST API layer on top of the existing PHP backend.
+8. **Inventory management with supplier alerts** — Automatically email suppliers when stock drops below a configurable threshold; bulk inventory updates via CSV import.
 
 ---
 
@@ -387,7 +411,7 @@ PHP frameworks provide CSRF and rate limiting out of the box. Building them from
 
 FreshMart is a complete, production-deployed e-commerce application that demonstrates the full software development lifecycle applied to a real-world problem relevant to the Rwandan market. Starting from a blank PHP file, the project grew into a platform with 23 database tables, 35+ PHP files, 7 automated email types, a full admin panel with analytics, and an automated CI/CD deployment pipeline.
 
-The project's key technical achievements are:
+Key technical achievements:
 
 - A working Mobile Money payment integration handling the full asynchronous USSD push-and-poll flow
 - A custom raw-socket SMTP mailer that sends 7 different transactional email types with no external dependencies
