@@ -1,9 +1,6 @@
 -- FreshMart MySQL Schema
 -- Run this in phpMyAdmin or: mysql -u root freshmart < install.sql
 
-CREATE DATABASE IF NOT EXISTS freshmart CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE freshmart;
-
 -- Users / Profiles
 CREATE TABLE IF NOT EXISTS profiles (
     id          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
