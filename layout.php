@@ -31,8 +31,12 @@ function startPage(string $title = 'FreshMart'): void {
 <?php endif ?>
   <div class="header-inner">
     <a href="<?= BASE_URL ?>/" class="logo">
-      <span class="logo-icon">🌿</span>
-      <span class="logo-text">FreshMart</span>
+      <?php $logoUrl = getSetting('logo_url'); if ($logoUrl): ?>
+        <img src="<?= h($logoUrl) ?>" alt="<?= h(getSetting('store_name','FreshMart')) ?>" class="logo-img" style="height:40px;max-width:160px;object-fit:contain" />
+      <?php else: ?>
+        <span class="logo-icon">🌿</span>
+        <span class="logo-text"><?= h(getSetting('store_name','FreshMart')) ?></span>
+      <?php endif; ?>
     </a>
 
     <form action="<?= BASE_URL ?>/shop.php" method="get" class="search-form desktop-only">
@@ -115,8 +119,12 @@ function endPage(): void {
       <!-- Brand column -->
       <div class="footer-col footer-brand">
         <a href="<?= BASE_URL ?>/" class="footer-logo">
-          <span class="footer-logo-icon">🌿</span>
-          <span class="footer-logo-text">FreshMart</span>
+          <?php $logoUrl = getSetting('logo_url'); if ($logoUrl): ?>
+            <img src="<?= h($logoUrl) ?>" alt="<?= h(getSetting('store_name','FreshMart')) ?>" style="height:36px;max-width:140px;object-fit:contain" />
+          <?php else: ?>
+            <span class="footer-logo-icon">🌿</span>
+            <span class="footer-logo-text"><?= h(getSetting('store_name','FreshMart')) ?></span>
+          <?php endif; ?>
         </a>
         <p class="footer-tagline">Fresh groceries delivered to your door. Quality you can trust, prices you'll love.</p>
 

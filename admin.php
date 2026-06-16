@@ -163,6 +163,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'footer_about','meta_description','google_analytics',
             'paypack_app_id','paypack_app_secret','paypack_enabled',
         ];
+        $allowed_keys[] = 'logo_url';
         foreach ($allowed_keys as $key) {
             if (isset($_POST[$key])) {
                 saveSetting($key, trim($_POST[$key]));
@@ -1115,7 +1116,7 @@ function statusBadge(string $status, array $map): string {
     <div class="adm-settings-nav">
       <?php
       $sections = [
-        'general'      => ['icon'=>'🏪','label'=>'General'],
+        'general'      => ['icon'=>'🏪','label'=>'General & Logo'],
         'hero'         => ['icon'=>'🖼','label'=>'Homepage Hero'],
         'announcement' => ['icon'=>'📢','label'=>'Announcement Bar'],
         'shipping'     => ['icon'=>'🚚','label'=>'Shipping & Tax'],
@@ -1161,9 +1162,36 @@ function statusBadge(string $status, array $map): string {
             <input type="text" name="store_address" value="<?= h($cfg['store_address']??'') ?>" placeholder="Kigali, Rwanda">
           </div>
           <div class="adm-form-group">
-            <label>USD → RWF Exchange Rate</label>
+            <label>USD &rarr; RWF Exchange Rate</label>
             <input type="number" name="usd_to_rwf_rate" value="<?= h($cfg['usd_to_rwf_rate']??'1400') ?>" min="1" step="1" placeholder="1400">
             <small class="adm-field-hint">Used to display prices in RWF across the store</small>
+          </div>
+        </div>
+
+        <!-- Logo upload -->
+        <div class="adm-settings-section-title" style="margin-top:1.5rem">🖼 Store Logo</div>
+        <div class="adm-settings-grid">
+          <div class="adm-form-group adm-col-span-2">
+            <label>Logo Image</label>
+            <?php $currentLogo = $cfg['logo_url'] ?? ''; ?>
+            <div id="logo-preview-wrap" style="display:<?= $currentLogo ? 'flex' : 'none' ?>;align-items:center;gap:1rem;margin-bottom:.75rem">
+              <img id="logo-preview" src="<?= h($currentLogo) ?>" alt="Logo"
+                   style="height:52px;max-width:200px;object-fit:contain;border:1px solid var(--adm-border);border-radius:.5rem;padding:.25rem .5rem;background:#fff" />
+              <button type="button" onclick="removeLogo()" class="adm-icon-btn del">&times; Remove</button>
+            </div>
+            <div style="display:flex;gap:.75rem;align-items:center;flex-wrap:wrap">
+              <label style="cursor:pointer;background:var(--adm-bg);border:1px solid var(--adm-border);padding:.5rem 1rem;border-radius:.5rem;font-size:.875rem;font-weight:500">
+                &uarr; Upload Logo
+                <input type="file" id="logo-file-input" accept="image/*" style="display:none" onchange="uploadLogo(this.files[0])">
+              </label>
+              <span style="color:var(--adm-muted);font-size:.8rem">or paste URL:</span>
+              <input type="url" id="logo-url-input" placeholder="https://example.com/logo.png"
+                     value="<?= h($currentLogo) ?>" oninput="setLogoFromUrl(this.value)"
+                     style="flex:1;min-width:180px;padding:.45rem .75rem;border:1px solid var(--adm-border);border-radius:.5rem;font-size:.875rem" />
+            </div>
+            <input type="hidden" name="logo_url" id="logo-url-final" value="<?= h($currentLogo) ?>">
+            <div id="logo-upload-status" style="font-size:.8rem;margin-top:.4rem;color:var(--adm-muted)"></div>
+            <small class="adm-field-hint">PNG/SVG with transparent background recommended. Leave empty to use the default &ldquo;🌿 FreshMart&rdquo; text logo.</small>
           </div>
         </div>
 
@@ -1686,6 +1714,46 @@ function previewHeroImg(url) {
     const span = el.querySelector('span');
     if (span) span.style.display = 'none';
   }
+}
+
+// ── Logo upload ──────────────────────────────────────────────
+function uploadLogo(file) {
+  if (!file) return;
+  const stat = document.getElementById('logo-upload-status');
+  stat.textContent = 'Uploading…';
+  const fd = new FormData();
+  fd.append('image', file);
+  fetch('<?= BASE_URL ?>/ajax/upload_image.php', { method: 'POST', body: fd })
+    .then(r => r.json())
+    .then(res => {
+      if (res.ok) {
+        setLogo(res.url);
+        stat.textContent = '✓ Uploaded!';
+        setTimeout(() => stat.textContent = '', 2000);
+      } else {
+        stat.textContent = '✕ ' + (res.error || 'Upload failed');
+      }
+    })
+    .catch(() => stat.textContent = '✕ Network error');
+}
+
+function setLogoFromUrl(url) {
+  if (url && url.startsWith('http')) setLogo(url);
+  else if (!url) { setLogo(''); }
+}
+
+function setLogo(url) {
+  document.getElementById('logo-url-final').value = url;
+  document.getElementById('logo-url-input').value = url;
+  const wrap = document.getElementById('logo-preview-wrap');
+  const img  = document.getElementById('logo-preview');
+  if (url) { img.src = url; wrap.style.display = 'flex'; }
+  else     { img.src = ''; wrap.style.display = 'none'; }
+}
+
+function removeLogo() {
+  setLogo('');
+  document.getElementById('logo-file-input').value = '';
 }
 
 function toggleSecret() {
