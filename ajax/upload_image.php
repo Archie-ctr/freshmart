@@ -7,9 +7,10 @@ require_once dirname(__DIR__) . '/functions.php';
 if (session_status() === PHP_SESSION_NONE) session_start();
 header('Content-Type: application/json');
 
-// Admin only
+// Admin or approved vendor
 $user = getCurrentUser();
-if (!$user || $user['role'] !== 'admin') {
+$allowed_user = $user && ($user['role'] === 'admin' || isApprovedVendor());
+if (!$allowed_user) {
     echo json_encode(['ok' => false, 'error' => 'Unauthorized']);
     exit;
 }

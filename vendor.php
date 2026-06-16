@@ -138,8 +138,9 @@ startPage('Vendor Dashboard');
     <!-- Add Product -->
     <div class="card">
       <h3 style="margin:0 0 1rem">➕ Add Product</h3>
-      <form method="post">
+      <form method="post" id="vendor-product-form">
         <input type="hidden" name="action" value="add_product">
+        <input type="hidden" name="image"  id="vnd-image-url" value="">
         <div class="form-group" style="margin-bottom:.75rem">
           <input type="text" name="name" required placeholder="Product name"
                  style="width:100%;padding:.6rem .8rem;border:1px solid var(--gray-300);border-radius:.5rem">
@@ -155,8 +156,61 @@ startPage('Vendor Dashboard');
             <option><?= $t ?></option>
           <?php endforeach ?>
         </select>
-        <input type="url" name="image" placeholder="Image URL (optional)"
-               style="width:100%;padding:.6rem .8rem;border:1px solid var(--gray-300);border-radius:.5rem;margin-bottom:.75rem">
+
+        <!-- Image: tab switcher -->
+        <div style="margin-bottom:.75rem">
+          <label style="font-size:.82rem;font-weight:600;display:block;margin-bottom:.4rem">Product Image</label>
+          <div style="display:flex;gap:0;border:1px solid var(--gray-300);border-radius:.5rem .5rem 0 0;overflow:hidden;margin-bottom:0">
+            <button type="button" id="vnd-tab-upload" onclick="vndSwitchTab('upload')"
+              style="flex:1;padding:.45rem;font-size:.8rem;border:none;background:#f0fdf4;color:#15803d;font-weight:600;cursor:pointer">
+              ⬆ Upload File
+            </button>
+            <button type="button" id="vnd-tab-url" onclick="vndSwitchTab('url')"
+              style="flex:1;padding:.45rem;font-size:.8rem;border:none;background:#f9fafb;color:#6b7280;cursor:pointer">
+              🔗 Image URL
+            </button>
+          </div>
+
+          <!-- Upload panel -->
+          <div id="vnd-panel-upload" style="border:1px solid var(--gray-300);border-top:none;border-radius:0 0 .5rem .5rem;padding:.6rem">
+            <div id="vnd-dropzone"
+              style="border:2px dashed var(--gray-300);border-radius:.4rem;padding:1.25rem;text-align:center;cursor:pointer;background:#fafafa"
+              ondragover="event.preventDefault();this.style.borderColor='#16a34a'"
+              ondragleave="this.style.borderColor='var(--gray-300)'"
+              ondrop="vndHandleDrop(event)"
+              onclick="document.getElementById('vnd-file-input').click()">
+              <input type="file" id="vnd-file-input" accept="image/*" style="display:none"
+                     onchange="vndUploadFile(this.files[0])">
+              <div id="vnd-dropzone-inner">
+                <div style="font-size:1.75rem">🖼</div>
+                <p style="font-size:.8rem;color:var(--gray-500);margin:.3rem 0 0">Click or drag &amp; drop · JPG, PNG, WebP · max 5 MB</p>
+              </div>
+            </div>
+            <div id="vnd-upload-progress" style="display:none;margin-top:.5rem">
+              <div style="background:var(--gray-200);border-radius:9999px;height:.4rem">
+                <div id="vnd-upload-fill" style="background:#16a34a;height:.4rem;border-radius:9999px;width:5%;transition:width .2s"></div>
+              </div>
+              <p id="vnd-upload-status" style="font-size:.78rem;color:var(--gray-500);margin:.25rem 0 0">Uploading…</p>
+            </div>
+            <p id="vnd-upload-error" style="display:none;font-size:.78rem;color:#dc2626;margin:.25rem 0 0"></p>
+          </div>
+
+          <!-- URL panel -->
+          <div id="vnd-panel-url" style="display:none;border:1px solid var(--gray-300);border-top:none;border-radius:0 0 .5rem .5rem;padding:.6rem">
+            <input type="url" id="vnd-url-input" placeholder="https://example.com/image.jpg"
+                   oninput="vndSetImage(this.value)"
+                   style="width:100%;padding:.55rem .75rem;border:1px solid var(--gray-300);border-radius:.4rem;font-size:.85rem">
+          </div>
+
+          <!-- Preview -->
+          <div id="vnd-preview-wrap" style="display:none;margin-top:.5rem;position:relative;display:none">
+            <img id="vnd-preview-img" src="" alt="Preview"
+                 style="width:100%;max-height:140px;object-fit:cover;border-radius:.4rem;border:1px solid var(--gray-200)">
+            <button type="button" onclick="vndClearImage()"
+              style="position:absolute;top:.3rem;right:.3rem;background:rgba(0,0,0,.55);color:#fff;border:none;border-radius:50%;width:1.4rem;height:1.4rem;font-size:.75rem;cursor:pointer;line-height:1">✕</button>
+          </div>
+        </div>
+
         <textarea name="description" rows="2" placeholder="Description…"
                   style="width:100%;padding:.6rem .8rem;border:1px solid var(--gray-300);border-radius:.5rem;margin-bottom:.75rem"></textarea>
         <button type="submit" class="btn btn-green" style="width:100%">Add Product</button>
@@ -217,5 +271,101 @@ startPage('Vendor Dashboard');
 
   <?php endif ?>
 </div>
+
+<script>
+const VND_UPLOAD_URL = '<?= BASE_URL ?>/ajax/upload_image.php';
+
+function vndSwitchTab(tab) {
+  const isUpload = tab === 'upload';
+  document.getElementById('vnd-panel-upload').style.display = isUpload ? 'block' : 'none';
+  document.getElementById('vnd-panel-url').style.display    = isUpload ? 'none'  : 'block';
+  document.getElementById('vnd-tab-upload').style.background = isUpload ? '#f0fdf4' : '#f9fafb';
+  document.getElementById('vnd-tab-upload').style.color      = isUpload ? '#15803d' : '#6b7280';
+  document.getElementById('vnd-tab-upload').style.fontWeight = isUpload ? '600' : '400';
+  document.getElementById('vnd-tab-url').style.background    = isUpload ? '#f9fafb' : '#f0fdf4';
+  document.getElementById('vnd-tab-url').style.color         = isUpload ? '#6b7280' : '#15803d';
+  document.getElementById('vnd-tab-url').style.fontWeight    = isUpload ? '400' : '600';
+}
+
+function vndSetImage(url) {
+  if (!url) { vndClearImage(); return; }
+  document.getElementById('vnd-image-url').value = url;
+  const img = document.getElementById('vnd-preview-img');
+  img.src = url;
+  document.getElementById('vnd-preview-wrap').style.display = 'block';
+}
+
+function vndClearImage() {
+  document.getElementById('vnd-image-url').value = '';
+  document.getElementById('vnd-preview-img').src = '';
+  document.getElementById('vnd-preview-wrap').style.display = 'none';
+  document.getElementById('vnd-url-input').value = '';
+  document.getElementById('vnd-dropzone-inner').innerHTML =
+    '<div style="font-size:1.75rem">🖼</div>' +
+    '<p style="font-size:.8rem;color:var(--gray-500);margin:.3rem 0 0">Click or drag &amp; drop &middot; JPG, PNG, WebP &middot; max 5 MB</p>';
+  document.getElementById('vnd-upload-error').style.display = 'none';
+  document.getElementById('vnd-upload-progress').style.display = 'none';
+}
+
+function vndHandleDrop(e) {
+  e.preventDefault();
+  e.currentTarget.style.borderColor = 'var(--gray-300)';
+  const file = e.dataTransfer.files[0];
+  if (file) vndUploadFile(file);
+}
+
+function vndUploadFile(file) {
+  if (!file) return;
+  const prog  = document.getElementById('vnd-upload-progress');
+  const fill  = document.getElementById('vnd-upload-fill');
+  const stat  = document.getElementById('vnd-upload-status');
+  const errEl = document.getElementById('vnd-upload-error');
+
+  errEl.style.display  = 'none';
+  prog.style.display   = 'block';
+  fill.style.width     = '5%';
+  stat.textContent     = 'Uploading…';
+
+  const fd = new FormData();
+  fd.append('image', file);
+  const xhr = new XMLHttpRequest();
+  xhr.open('POST', VND_UPLOAD_URL);
+
+  xhr.upload.onprogress = e => {
+    if (e.lengthComputable) fill.style.width = Math.round((e.loaded / e.total) * 90) + '%';
+  };
+
+  xhr.onload = () => {
+    fill.style.width = '100%';
+    try {
+      const res = JSON.parse(xhr.responseText);
+      if (res.ok) {
+        stat.textContent = '✓ Uploaded!';
+        vndSetImage(res.url);
+        document.getElementById('vnd-dropzone-inner').innerHTML =
+          `<img src="${res.url}" style="max-height:80px;border-radius:.3rem;object-fit:cover"/>` +
+          `<p style="font-size:.75rem;color:var(--gray-500);margin:.25rem 0 0">${file.name}</p>`;
+        setTimeout(() => { prog.style.display = 'none'; }, 1000);
+      } else {
+        prog.style.display   = 'none';
+        errEl.textContent    = '✕ ' + (res.error || 'Upload failed');
+        errEl.style.display  = 'block';
+      }
+    } catch {
+      prog.style.display  = 'none';
+      errEl.textContent   = '✕ Invalid server response';
+      errEl.style.display = 'block';
+    }
+  };
+
+  xhr.onerror = () => {
+    prog.style.display  = 'none';
+    errEl.textContent   = '✕ Network error';
+    errEl.style.display = 'block';
+  };
+
+  xhr.send(fd);
+}
+</script>
 
 <?php endPage(); ?>
