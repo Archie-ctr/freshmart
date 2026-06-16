@@ -14,3 +14,11 @@ define('CFG_DB_NAME', 'if0_XXXXXXXX_freshmart');     // InfinityFree database na
 // Paypack mobile money credentials
 define('CFG_PAYPACK_APP_ID',     'your_paypack_app_id_here');
 define('CFG_PAYPACK_APP_SECRET', 'your_paypack_app_secret_here');
+
+// Gmail SMTP (App Password — generate at myaccount.google.com/apppasswords)
+define('CFG_MAIL_HOST',     'smtp.gmail.com');
+define('CFG_MAIL_PORT',     587);
+define('CFG_MAIL_USER',     'your_gmail@gmail.com');
+define('CFG_MAIL_PASS',     'xxxx xxxx xxxx xxxx'); // 16-char app password
+define('CFG_MAIL_FROM',     'your_gmail@gmail.com');
+define('CFG_MAIL_FROM_NAME','FreshMart');

@@ -247,6 +247,13 @@ function generateOtp(int $userId, string $purpose = '2fa'): string {
     $pdo->prepare("DELETE FROM otp_tokens WHERE user_id=? AND purpose=?")->execute([$userId, $purpose]);
     $pdo->prepare("INSERT INTO otp_tokens (user_id, otp_hash, purpose, expires_at) VALUES (?,?,?,?)")
         ->execute([$userId, $hash, $purpose, $exp]);
+    // Send via email if mailer is loaded
+    if (function_exists('sendOtpEmail') && $purpose === '2fa') {
+        $u = getDB()->prepare('SELECT email, full_name FROM profiles WHERE id=?');
+        $u->execute([$userId]);
+        $u = $u->fetch();
+        if ($u) sendOtpEmail($u['email'], $u['full_name'] ?: 'Customer', $code);
+    }
     return $code;
 }
 
