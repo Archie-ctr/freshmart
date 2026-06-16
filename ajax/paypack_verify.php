@@ -5,6 +5,7 @@
  */
 require_once dirname(__DIR__) . '/functions.php';
 require_once dirname(__DIR__) . '/paypack.php';
+require_once dirname(__DIR__) . '/mailer.php';
 
 if (session_status() === PHP_SESSION_NONE) session_start();
 header('Content-Type: application/json');
@@ -34,8 +35,9 @@ if ($status === 'successful') {
             }
 
             // Move to confirmed session and clear cart
-            $_SESSION['last_order'] = [
+            $lastOrder = [
                 'id'           => $pending['id'],
+                'email'        => $pending['addr']['email'] ?? '',
                 'addr'         => $pending['addr'],
                 'total'        => $pending['total'],
                 'subtotal'     => $pending['total'],
@@ -45,8 +47,18 @@ if ($status === 'successful') {
                 'points_earned'=> $pointsEarned,
                 'points_total' => !empty($_SESSION['user_id']) ? getLoyaltyPoints((int)$_SESSION['user_id']) : 0,
             ];
+            $_SESSION['last_order'] = $lastOrder;
             unset($_SESSION['pending_order']);
             clearCart();
+
+            // Send order confirmation email
+            if (!empty($lastOrder['email'])) {
+                sendOrderConfirmationEmail(
+                    $lastOrder['email'],
+                    $lastOrder['addr']['name'] ?? 'Customer',
+                    $lastOrder
+                );
+            }
 
         } catch (Exception $e) {
             // Log but still report success to frontend
