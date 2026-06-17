@@ -165,6 +165,8 @@ function endPage(): void {
         <h4 class="footer-heading" style="margin-top:1.75rem">Support</h4>
         <ul class="footer-links">
           <li><a href="#">Help Center</a></li>
+          <li><a href="<?= BASE_URL ?>/about.php">About FreshMart</a></li>
+          <li><a href="<?= BASE_URL ?>/contact.php">Contact Us</a></li>
           <li><a href="#">Returns Policy</a></li>
           <li><a href="#">Privacy Policy</a></li>
         </ul>
