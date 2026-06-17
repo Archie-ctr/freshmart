@@ -3,8 +3,8 @@
 
 **Student Name:** Archie K Gonwoe Jr  
 **Registration Number:** 23686/2024  
-**Course:** Web Application Development  
-**Institution:** [Your Institution Name]
+**Course:** E-commerce and Web Application 
+**Institution:** UNILAK
 
 ---
 
@@ -40,7 +40,7 @@ Specifically, the following problems existed:
 - No affordable, locally-relevant online grocery platform supporting MTN MoMo and Airtel Money natively
 - No unified platform where small grocery vendors could reach customers online
 - Prices on imported platforms are shown only in USD, which is unfamiliar to most Rwandan shoppers
-- No automated communication between store and customers — no order receipts, no tracking updates, no new product announcements
+- No automated communication between store and customers —  no new product announcements
 
 FreshMart was built to directly solve all of these problems.
 
@@ -330,8 +330,8 @@ The repository contains:
 Hosted on InfinityFree with MySQL 8.0. The application is deployed automatically via FTP on every push to the `main` branch through GitHub Actions.
 
 Admin credentials:
-- Email: `admin@freshmart.com`
-- Password: `admin123`
+- Email: `archiekgonwoe@gmail.com`
+- Password: `123456;`
 
 ---
 
