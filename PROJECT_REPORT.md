@@ -254,9 +254,9 @@ Gmail delivers to recipient inbox
 
 ## 7. Screenshots
 
-### 7.1 Customer-Facing Pages
+### 7.1 Desktop — Customer-Facing Pages
 
-**Homepage**
+**Homepage — Hero, Categories, Flash Deals, Featured Products**
 ![Homepage](screenshots/homepage.png)
 
 **Shop / Product Listing**
@@ -277,34 +277,86 @@ Gmail delivers to recipient inbox
 **Order Confirmation**
 ![Order Page](screenshots/Order%20Page.png)
 
-**Login Page**
+**Login Page — with Password Eye Toggle & Forgot Password link**
 ![Login Page](screenshots/Login%20Page.png)
 
 **Forgot Password**
 ![Forgot Password](screenshots/forgot%20password.png)
 
-### 7.2 Admin Panel
+### 7.2 Desktop — Admin Panel
 
-**Admin Dashboard**
+**Admin Dashboard — KPI Cards, Recent Orders, Low Stock**
 ![Admin Dashboard](screenshots/Admin%20Dashboard.png)
 
-**Admin Analytics**
+**Admin Analytics — Revenue Chart, Top Products, Category Breakdown**
 ![Admin Analytics](screenshots/Admin%20Analytics.png)
 
-**Admin Products**
+**Admin Products — Product Table with Edit/Delete**
 ![Admin Products](screenshots/Admin%20Products.png)
 
-**Admin Orders**
+**Admin Orders — Order Cards with Status Update**
 ![Admin Orders](screenshots/Admin%20Orders.png)
 
-**Admin Flash Deals**
+**Admin Flash Deals — Create & Manage Deals**
 ![Admin Flash Deals](screenshots/Admin%20Flash%20Deals.png)
 
 **Admin Vendor Management**
 ![Admin Vendor](screenshots/Admin%20Vendor.png)
 
-**Admin Settings**
+**Admin Settings — General, Logo, Hero, Payment, Social**
 ![Admin Settings](screenshots/Admin%20Settings.png)
+
+---
+
+### 7.3 Mobile — Customer-Facing Pages
+
+FreshMart is fully responsive. All customer-facing pages adapt to mobile screen sizes with a collapsible navigation menu, stacked layouts, and touch-friendly buttons.
+
+**Mobile Homepage**
+![Mobile Homepage](screenshots/Mobile%20screen%20Homepage.png)
+
+**Mobile Shopping Cart**
+![Mobile Cart](screenshots/mobile%20screen%20-%20Cart.png)
+
+**Mobile Cart (alternate view)**
+![Mobile Shopping Cart](screenshots/Mobile-%20Shopping%20cart.png)
+
+**Mobile Checkout**
+![Mobile Checkout](screenshots/Mobile%20creen%20-%20Checkout.png)
+
+**Mobile Product Detail**
+![Mobile Product Detail](screenshots/Mobile%20Screen%20-%20Product%20detail.png)
+
+**Mobile Order History**
+![Mobile Orders](screenshots/Mobile%20Screen%20-%20Order.png)
+
+**Mobile Order Confirmation**
+![Mobile Order Confirmation](screenshots/Mobile%20Screen%20-%20Order%20confirmation.png)
+
+**Mobile Login Page — with Eye Toggle**
+![Mobile Login](screenshots/Mobile%20Screen%20-%20Login%20Page.png)
+
+**Mobile Forgot Password**
+![Mobile Forgot Password](screenshots/Mobile%20Screen%20-%20Forgot%20password.png)
+
+### 7.4 Mobile — Admin Panel
+
+The admin panel is also fully responsive with a collapsible sidebar, adapted tables, and touch-friendly controls.
+
+**Mobile Admin Dashboard**
+![Mobile Admin Dashboard](screenshots/Mobile%20screen%20-%20Admin%20Dashboard.png)
+
+**Mobile Admin Analytics**
+![Mobile Admin Analytics](screenshots/Mobile%20screen%20-%20Admin%20Analytics.png)
+
+**Mobile Admin Products**
+![Mobile Admin Products](screenshots/Mobile%20Screen%20-%20Admin%20Products.png)
+
+**Mobile Admin Orders**
+![Mobile Admin Orders](screenshots/Mobile%20Screen%20-%20Admin%20Order.png)
+
+**Mobile Admin Settings**
+![Mobile Admin Settings](screenshots/Mobile%20screen%20-%20admin%20shop%20settings.png)
 
 ---
 
