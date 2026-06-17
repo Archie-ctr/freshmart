@@ -159,7 +159,6 @@ function endPage(): void {
           <li><a href="<?= BASE_URL ?>/orders.php">My Orders</a></li>
           <li><a href="<?= BASE_URL ?>/wishlist.php">❤️ Wishlist</a></li>
           <li><a href="<?= BASE_URL ?>/cart.php">View Cart</a></li>
-          <li><a href="<?= BASE_URL ?>/admin.php">Admin Dashboard</a></li>
         </ul>
 
         <h4 class="footer-heading" style="margin-top:1.75rem">Support</h4>
